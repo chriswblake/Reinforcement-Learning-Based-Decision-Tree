@@ -1,0 +1,11 @@
+Training File: 20.csv
+Exporation Rate: 0
+Discount Factor: 0.85
+Parallel Query Updates: True
+Parallel Report Updates: False
+Total Passes: 2
+
+Testing File: 21.csv
+Correct Count: 2026
+Points Checked: 2031
+Percent Correct: 99.75

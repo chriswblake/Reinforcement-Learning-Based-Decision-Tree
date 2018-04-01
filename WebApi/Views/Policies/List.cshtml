@@ -1,0 +1,83 @@
+﻿@model IEnumerable<WebApi.Models.Policy>
+
+@{
+    ViewData["Title"] = "View";
+    IEnumerable<WebApi.Models.Policy> policies = Model;
+    RLDT.DecisionTree.TreeSettings treeSettings = new RLDT.DecisionTree.TreeSettings()
+    {
+        ShowBlanks = false,
+        ShowSubScores = false
+    };
+}
+
+<style>
+    table {
+        border-collapse: collapse;
+        border: 1px solid #DDDDDD;
+        font-family: Arial, sans-serif;
+        font-size: 10pt;
+    }
+    tr.PolicyHeader th {
+        background-color: #007acc;
+        padding: 3px 5px 3px 5px;
+        margin: 10px;
+        border: 1px solid black;
+    }
+    tr.PolicyRow td {
+        text-align: center;
+        vertical-align: top;
+        border: 1px solid black;
+    }
+
+    div.DecisionTree table {
+        border-collapse: collapse;
+        padding: 0px;
+        margin: 0px;
+        font: 8pt, arial, sans-serif;
+        border: 0px solid #EEEEEE;
+    }
+    div.DecisionTree table td {
+        vertical-align: top;
+        text-align: center;
+        border: 0px;
+    }
+    div.DecisionTree table td.Feature {
+        border-bottom: 1px solid black;
+        font-weight: bold;
+    }
+    div.DecisionTree table td div.Leaf {
+        border: 1px solid #333333;
+        background-color: #CCCCCC;
+        padding: 3px 10px 3px 10px;
+        white-space: nowrap;
+    }
+
+
+</style>
+
+<table class="PolicyList">
+    <thead>
+        <tr class="PolicyHeader">
+            <th>Policy Id</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>States</th>
+            <th>Exploration Rate</th>
+            <th>Discount Factor</th>
+            <th>Tree</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (WebApi.Models.Policy thePolicy in policies) {
+        <tr class="PolicyRow">
+            <td>@thePolicy.PolicyId</td>
+            <td><a href="/viewer/policies/@thePolicy.PolicyId/Details">@thePolicy.Name</a></td>
+            <td>@thePolicy.Description</td>
+            <td>@thePolicy.StateSpaceCount</td>
+            <td>@thePolicy.ExplorationRate</td>
+            <td>@thePolicy.DiscountFactor</td>
+            <td>@Html.Raw(thePolicy.ToDecisionTree(treeSettings).ToHtmlTree(false))</td>
+        </tr>
+        }
+    </tbody>
+</table>

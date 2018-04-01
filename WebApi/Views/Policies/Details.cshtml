@@ -1,0 +1,18 @@
+﻿@model WebApi.Models.Policy
+
+@{
+    ViewData["Title"] = "Details";
+    WebApi.Models.Policy thePolicy = Model;
+    string treeHtml = thePolicy.DecisionTree.ToHtmlTree();
+}
+
+<table>
+    <tr><td>Name:</td><td>@thePolicy.Name</td></tr>
+    <tr><td>Description:</td><td>@thePolicy.Description</td></tr>
+    <tr><td>Exploration Rate:</td><td>@thePolicy.ExplorationRate</td></tr>
+    <tr><td>Discount Factor:</td><td>@thePolicy.DiscountFactor</td></tr>
+</table>
+<div>
+    @Html.Raw(treeHtml)
+
+</div>

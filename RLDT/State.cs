@@ -188,7 +188,7 @@ namespace RLDT
                     Labels[l.Key] = labelPercent;
                     sumGini += Math.Pow(labelPercent, 2.0);
                 }
-                double maxGini = 1.00000001 - Labels.Count * Math.Pow(1.0 / Labels.Count, 2); // 0.000001 prevents division by zero.
+                double maxGini = 1.00000001 - (1.0 / Labels.Count); // 0.000001 prevents division by zero.
                 GiniImpurity = (1 - sumGini) / maxGini;
             }
         }

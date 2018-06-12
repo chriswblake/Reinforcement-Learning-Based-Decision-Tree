@@ -45,16 +45,24 @@ namespace RLDT
         /// <summary>
         /// The list of possible next states that are allowed from this state.
         /// The dictionary key is the actual query.
-        /// THe dictionary value is the expected reward for chosing that query.
+        /// The dictionary value is the expected reward for chosing that query.
         /// </summary>
         public Dictionary<Query, double> Queries { get; set; }
+
+        /// <summary>
+        /// The gini impurity represents the uniformity of the experienced
+        /// label distribution. Note: it is modified to be relative to the max possible gini impurity
+        /// for the given number of labels.
+        /// 0 => only one label
+        /// 1.0 => even distribution over all labels
+        /// </summary>
+        public double GiniImpurity { get; set;  }
 
         //Locks
         private Object labelsLock = new object();
         private Object featuresLock = new object();
         private Object queriesLock = new object();
         
-
         //Constructors
         /// <summary>
         /// Creates a new state by combining an existing state and new feature. Queries are updated using the datavector.
@@ -142,7 +150,26 @@ namespace RLDT
         public void AdjustLabels(FeatureValuePair correctLabel)
         {
             lock(labelsLock)
-            { 
+            {
+                //Check impurity. If it is very high, reset the labels.
+                if (GiniImpurity > 0.99)
+                {
+                    foreach (var l in Labels.ToList())
+                    {
+                        Labels[l.Key] = 0;
+                        LabelsCount[l.Key] = 0;
+                    }
+                }
+
+                //Reduce label counts occasionally (to prevent going to infinity)
+                if (LabelsCount.Sum(p => p.Value) > 10000)
+                {                  
+                    foreach (FeatureValuePair label in Labels.Select(p => p.Key))
+                    {
+                        LabelsCount[label] /= 10;
+                    }
+                }
+
                 //Add missing label
                 if (!Labels.ContainsKey(correctLabel))
                     Labels.Add(correctLabel, 0.0);
@@ -152,19 +179,17 @@ namespace RLDT
                 //Increase experiences of label
                 LabelsCount[correctLabel]++;
 
-                //Reduce label counts occasionally (to prevent going to infinity)
-                if (LabelsCount.Sum(p => p.Value) > 10000)
-                    foreach(FeatureValuePair label in Labels.Select(p=>p.Key))
-                    {
-                        LabelsCount[label] /= 10;
-                    }
-
-                //Recalculate percentage
-                int sumCount = LabelsCount.Sum(p=> p.Value);
+                //Recalculate percentages and gini impurity
+                double sumCount = LabelsCount.Sum(p=> p.Value);               
+                double sumGini = 0;
                 foreach (var l in Labels.ToList())
                 {
-                    Labels[l.Key] = LabelsCount[l.Key] / ((double) sumCount);
+                    double labelPercent = LabelsCount[l.Key] / (sumCount); // 0.0 to 1.0
+                    Labels[l.Key] = labelPercent;
+                    sumGini += Math.Pow(labelPercent, 2.0);
                 }
+                double maxGini = 1.00000001 - Labels.Count * Math.Pow(1.0 / Labels.Count, 2); // 0.000001 prevents division by zero.
+                GiniImpurity = (1 - sumGini) / maxGini;
             }
         }
 
@@ -420,6 +445,7 @@ namespace RLDT
             s += " Features=" + this.Features.Count.ToString().PadRight(10, ' ');
             s += " Queries=" + this.Queries.Count.ToString().PadRight(10, ' ');
             s += " Labels=" + this.Labels.Count.ToString().PadRight(10, ' ');
+            s += " Gini=" + this.GiniImpurity.ToString("N3").PadRight(10, ' ');
             return s;
         }
         

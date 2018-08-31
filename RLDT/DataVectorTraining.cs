@@ -40,18 +40,22 @@ namespace RLDT
         /// </summary>
         /// <param name="headers">The names of the features.</param>
         /// <param name="dataobjects">The actual values of each feature.</param>
-        /// <param name="rewards">tThe relative importance of each feature (-1 to 1).</param>
+        /// <param name="importance">The relative importance of each feature (-1 to 1).</param>
         /// <param name="labelFeatureName">The feature to use as the label. It will be shifted out of the headers and dataobjects and stored as "Label".</param>
-        public DataVectorTraining(string[] headers, object[] dataobjects, double[] rewards, string labelFeatureName)
+        public DataVectorTraining(string[] headers, object[] dataobjects, double[] importance, string labelFeatureName)
         {
             //Check number of headers matches number of data
-            if (headers.Length != dataobjects.Length)
-                throw new FormatException("Number of headers and data per line do not match. Ensure there is a header for each value.");
+            if ((headers.Length != dataobjects.Length) || (headers.Length != importance.Length))
+                throw new FormatException("Number of headers, importance, and data per line do not match. Ensure there is a header and importance for each value.");
 
-            //Build list of features. (Note: there is nothing about the reward yet. It is just hardcoded as -10.) 
+            //Check label feature is valid
+            if (!headers.Contains(labelFeatureName))
+                throw new ArgumentException("'labelFeatureName' must exist in the list of headers.");
+
+            //Build list of features.
             Features = new List<FeatureValuePairWithImportance>().Cast<FeatureValuePair>().ToList();
             for (int i = 0; i < headers.Length; i++)
-                Features.Add(new FeatureValuePairWithImportance(headers[i], dataobjects[i], rewards[i]));
+                Features.Add(new FeatureValuePairWithImportance(headers[i], dataobjects[i], importance[i]));
 
             //Find feature with label
             FeatureValuePair labelFeature = Features.Find(f => f.Name == labelFeatureName);

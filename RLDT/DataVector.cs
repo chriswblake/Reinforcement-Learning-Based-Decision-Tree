@@ -50,7 +50,7 @@ namespace RLDT
             //Create list
             Features = new List<FeatureValuePair>();
 
-            //Build list of features. (Note: there is nothing about the reward yet. It is just hardcoded as -10.) 
+            //Build list of features. 
             for (int i = 0; i < headers.Length; i++)
             {
                 Features.Add(new FeatureValuePair(headers[i], dataobjects[i]));

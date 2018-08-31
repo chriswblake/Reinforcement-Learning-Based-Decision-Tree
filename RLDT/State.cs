@@ -379,7 +379,7 @@ namespace RLDT
                         //Create the possibly new query
                         Query newQuery = new Query(theFeature, dataVector.Label);
 
-                        //Try to add the querry
+                        //Try to add the query
                         if (!Queries.ContainsKey(newQuery))
                             Queries.Add(newQuery, 1);
                     }
@@ -429,7 +429,6 @@ namespace RLDT
                 return GenerateId(newFeatureHashSet).GetHashCode();
             }
         }
-
 
 
 

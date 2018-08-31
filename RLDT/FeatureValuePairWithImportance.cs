@@ -35,9 +35,9 @@ namespace RLDT
         }
 
         //Constructors
-        public FeatureValuePairWithImportance(string name, object value, double reward) : base(name, value)
+        public FeatureValuePairWithImportance(string name, object value, double importance) : base(name, value)
         {
-            this.Importance = reward;
+            this.Importance = importance;
         }
 
         //Overrides

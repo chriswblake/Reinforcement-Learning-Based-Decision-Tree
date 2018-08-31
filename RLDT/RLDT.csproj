@@ -2,6 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Christopher W. Blake</Authors>
+    <PackageId>ReinforcementLearningBasedDecisionTree</PackageId>
+    <Product>Reinforcement Learning Based Decision Tree</Product>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <RepositoryUrl>https://github.com/chriswblake/Reinforcement-Learning-Based-Decision-Tree</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/chriswblake/Reinforcement-Learning-Based-Decision-Tree</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/chriswblake/Reinforcement-Learning-Based-Decision-Tree/blob/master/LICENSE</PackageLicenseUrl>
+    <Copyright />
   </PropertyGroup>
 
   <ItemGroup>

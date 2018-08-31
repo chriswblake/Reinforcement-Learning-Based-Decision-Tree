@@ -332,6 +332,40 @@ namespace RLDT
             }
         }
 
+        public void RemoveFeatureValuePair(FeatureValuePair fvp)
+        {
+            ///This Method is far from ideal! It checks every state to see
+            ///if it is affected. This should be replaced!
+
+            lock(stateSpacesLock)
+            { 
+                foreach (var s in this.StateSpace.ToList())
+                {
+                    State theState = s.Value;
+
+                    //Remove states with this feature
+                    if (theState.Features.Contains(fvp))
+                    {
+                        this.StateSpace.Remove(s.Key);
+                        continue;
+                    }
+                        
+                    //Remove queries from other states
+                    foreach (Query theQuery in theState.Queries.Keys)
+                    {
+                        if (theQuery.Feature.Equals(fvp))
+                        {
+                            theState.Queries.Remove(theQuery);
+                            break;
+                        }
+                    }
+
+                    //Remove labels
+                    if(theState.Labels.ContainsKey(fvp))
+                        theState.Labels.Remove(fvp);
+                }
+            }
+        }
 
 
         //Methods - Classification
@@ -428,7 +462,9 @@ namespace RLDT
             foreach (KeyValuePair<Query, double> queryPair in bestGroupQueries.ToList())
             {
                 double queryExpectedReward = queryPair.Value;
-                double labelExpectedReward = currentState.Labels[queryPair.Key.Label];
+                double labelExpectedReward = 0; //If label was never seen, then probability is zero.
+                if (currentState.Labels.ContainsKey(queryPair.Key.Label))
+                    labelExpectedReward = currentState.Labels[queryPair.Key.Label];
 
                 if (queryExpectedReward > labelExpectedReward)
                     bestGroupQueriesFiltered.Add(queryPair);

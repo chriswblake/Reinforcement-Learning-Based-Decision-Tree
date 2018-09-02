@@ -28,7 +28,7 @@ namespace RLDT.DecisionTree
         /// <summary>
         /// The feature name or feature value.
         /// </summary>
-        public string Name { get; set; }
+        public object Name { get; set; }
 
         /// <summary>
         /// For tracking if the node is a feature, value, or the root node. Simply allows easier processing.
@@ -53,7 +53,7 @@ namespace RLDT.DecisionTree
         /// </summary>
         /// <param name="groupName">The feature name, or the feature value.</param>
         /// <param name="type">If the node is a feature, value, or the root node.</param>
-        public TreeNode(string groupName, TreeNodeType type)
+        public TreeNode(object groupName, TreeNodeType type)
         {
             this.Parent = null;
             this.Name = groupName;
@@ -87,7 +87,7 @@ namespace RLDT.DecisionTree
                 while (true)
                 {
                     //Determine feature
-                    string currentFeature = currentNode.Name;
+                    string currentFeature = currentNode.Name.ToString();
 
                     //Get the feature from the datavector
                     FeatureValuePair theFeature = dataVector[currentFeature];
@@ -171,7 +171,8 @@ namespace RLDT.DecisionTree
         /// <returns></returns>
         public string ToHtmlTree()
         {
-            return ToHtmlTree(true);
+            //Default display settings
+            return ToHtmlTree(new TreeDisplaySettings());
         }
 
         /// <summary>
@@ -180,13 +181,97 @@ namespace RLDT.DecisionTree
         /// </summary>
         /// <param name="includeDefaultStyle">If true, default styling is included. If false, no styling is provided.</param>
         /// <returns></returns>
-        public string ToHtmlTree(bool includeDefaultStyle)
+        public string ToHtmlTree(TreeDisplaySettings treeDisplaySettings)
         {
             string html = "";
-            if (includeDefaultStyle)
-            { 
-                #region html styling
-                html += @"
+            if (treeDisplaySettings.IncludeDefaultTreeStyling)
+                html += DefaultStyling;
+
+            //Get tree at this node
+            html += "<div class='DecisionTree'>\n";
+            html += ToHtmlTree(this, treeDisplaySettings);
+            html += "</div>\n";
+            return html;
+        }
+
+        /// <summary>
+        /// The recursive process of cycling through nodes, to convert to HTML.
+        /// </summary>
+        /// <param name="groupNode">The current node being converted.</param>
+        /// <returns>HTML for the current node and its subnodes.</returns>
+        private string ToHtmlTree(TreeNode groupNode, TreeDisplaySettings treeDisplaySettings)
+        {
+            //Check for root node. Skip if if not needed.
+            if (groupNode.Type == TreeNodeType.Root && groupNode.SubNodes.Count == 1 && groupNode.Leaves.Count == 0)
+                return ToHtmlTree(groupNode.SubNodes[0], treeDisplaySettings);
+
+            string nodeHtml = "";
+
+            //Node title
+            nodeHtml += "<table>";
+            if (groupNode.Type == TreeNodeType.Feature)
+                nodeHtml += "<tr><td class='Feature' colspan=100>" + groupNode.Name + "</td></tr>";
+            else if(groupNode.Type == TreeNodeType.Root)
+                nodeHtml += "<tr><td class='Value' colspan=100>" + groupNode.Name + "</td></tr>";
+            else
+                nodeHtml += "<tr><td class='Value' colspan=100>" + GetPropValue(groupNode.Name, treeDisplaySettings.ValueDisplayProperty) + "</td></tr>";
+            nodeHtml += "<tr>";
+
+            //Show subnodes
+            if (groupNode.SubNodes.Count > 0)
+            {
+                foreach (var subnode in groupNode.SubNodes)
+                {
+                    nodeHtml += "<td>";
+                    nodeHtml += ToHtmlTree(subnode, treeDisplaySettings);
+                    nodeHtml += "</td>";
+                }
+            }
+
+            //Show leaves
+            int leafCount = groupNode.Leaves.Count;
+            if (leafCount > 0)
+            {
+                nodeHtml += "<td class='Leaf'>";
+                nodeHtml += "<div class='Leaf'>\n";
+
+                foreach (var leafItem in groupNode.Leaves)
+                {
+                    //Label
+                    //nodeHtml += leafItem.LabelValue;
+                    string displayProperty = treeDisplaySettings.LabelDisplayProperty;
+                    nodeHtml += GetPropValue(leafItem.LabelValue, displayProperty).ToString();
+
+                    //Label %
+                    if (leafCount > 1)
+                        nodeHtml += ": " + leafItem.ExpectedReward.ToString("N3") + "</br>\n";
+                }
+                nodeHtml += "</div>\n";
+                nodeHtml += "</td>";
+
+            }
+            nodeHtml += "</tr>";
+            nodeHtml += "</table>";
+
+
+            return nodeHtml;
+        }
+        public static object GetPropValue(object src, string propName)
+        {
+            if (propName == "ToString" || propName == null)
+                return src.ToString();
+
+            return src.GetType().GetProperty(propName).GetValue(src, null);
+        }
+
+        /// <summary>
+        /// The default styling for displaying the decision tree in html.
+        /// </summary>
+        public static string DefaultStyling
+        {
+            get
+            {
+                return @"
     <style>
     div.DecisionTree table {
         border-collapse: collapse;
@@ -215,73 +300,7 @@ namespace RLDT.DecisionTree
 
     </style>
     ";
-                    #endregion
             }
-
-            //Get tree at this node
-            html += "<div class='DecisionTree'>\n";
-            html += ToHtmlTree(this);
-            html += "</div>\n";
-            return html;
-        }
-
-        /// <summary>
-        /// The recursive process of cycling through nodes, to convert to HTML.
-        /// </summary>
-        /// <param name="groupNode">The current node being converted.</param>
-        /// <returns>HTML for the current node and its subnodes.</returns>
-        private string ToHtmlTree(TreeNode groupNode)
-        {
-            //Check for root node. Skip if if not needed.
-            if (groupNode.Type == TreeNodeType.Root && groupNode.SubNodes.Count == 1 && groupNode.Leaves.Count == 0)
-                return ToHtmlTree(groupNode.SubNodes[0]);
-
-            string nodeHtml = "";
-
-            //Node title
-            nodeHtml += "<table>";
-            if (groupNode.Type == TreeNodeType.Feature)
-                nodeHtml += "<tr><td class='Feature' colspan=100>" + groupNode.Name + "</td></tr>";
-            else
-                nodeHtml += "<tr><td class='Value' colspan=100>" + groupNode.Name + "</td></tr>";
-            nodeHtml += "<tr>";
-
-            //Show subnodes
-            if (groupNode.SubNodes.Count > 0)
-            {
-                foreach (var subnode in groupNode.SubNodes)
-                {
-                    nodeHtml += "<td>";
-                    nodeHtml += ToHtmlTree(subnode);
-                    nodeHtml += "</td>";
-                }
-            }
-
-            //Show leaves
-            int leafCount = groupNode.Leaves.Count;
-            if (leafCount > 0)
-            {
-                nodeHtml += "<td class='Leaf'>";
-                nodeHtml += "<div class='Leaf'>\n";
-
-                foreach (var leafItem in groupNode.Leaves)
-                {
-                    //Label
-                    nodeHtml += leafItem.LabelValue;
-
-                    //Label %
-                    if (leafCount > 1)
-                        nodeHtml += ": " + leafItem.ExpectedReward.ToString("N3") + "</br>\n";
-                }
-                nodeHtml += "</div>\n";
-                nodeHtml += "</td>";
-
-            }
-            nodeHtml += "</tr>";
-            nodeHtml += "</table>";
-
-
-            return nodeHtml;
         }
 
         /// <summary>
@@ -321,6 +340,13 @@ namespace RLDT.DecisionTree
             }
 
             return s;
+        }
+
+        public class TreeDisplaySettings
+        {
+            public bool IncludeDefaultTreeStyling { get; set; } = true;
+            public string ValueDisplayProperty { get; set; } = "ToString";
+            public string LabelDisplayProperty { get; set; } = "ToString";
         }
     }
 }

@@ -14,7 +14,7 @@ namespace RLDT
     /// Labels are used for classifying a datavector that would visit this state.
     /// Queries and Labels can be compared to determine an action, such as moving to a next state or reporting a label.
     /// </summary>
-    public class State
+    public class State : IRemoveSelf, IDisposable
     {
         //Properties
         /// <summary>
@@ -114,9 +114,7 @@ namespace RLDT
             //Add missing details
             AddMissingQueriesAndLabels(dataVector);
         }
-
-
-
+        
         //Methods
         /// <summary>
         /// Adds the given feature to the state and removes related queries. This feature is
@@ -126,10 +124,12 @@ namespace RLDT
         private void AddFeature(FeatureValuePair theFeature)
         {
             lock(featuresLock)
-            { 
+            {
                 //Add to list of features
-                Features.Add(new FeatureValuePair(theFeature.Name, theFeature.Value)); //to prevent storing derived classes
+                FeatureValuePair fvp = new FeatureValuePair(theFeature.Name, theFeature.Value); //copy to prevent storing derived classes such as FeatureValuePairWithImportance
+                Features.Add(fvp); 
                 FeatureNames.Add(theFeature.Name);
+                fvp.OnRemoveSelf += FeatureValuePair_OnRequestRemoved;
             }
 
             //Remove queries with same feature name
@@ -142,7 +142,7 @@ namespace RLDT
                 }
             }
         }
-
+        
         /// <summary>
         /// Updates the percentage probability of each label at this state.
         /// </summary>
@@ -172,9 +172,11 @@ namespace RLDT
 
                 //Add missing label
                 if (!Labels.ContainsKey(correctLabel))
+                {
                     Labels.Add(correctLabel, 0.0);
-                if (!LabelsCount.ContainsKey(correctLabel))
                     LabelsCount.Add(correctLabel, 0);
+                    correctLabel.OnRemoveSelf += Label_OnRemoveSelf; ;
+                }
 
                 //Increase experiences of label
                 LabelsCount[correctLabel]++;
@@ -335,9 +337,9 @@ namespace RLDT
             if (Queries.Count == 0) return new List<KeyValuePair<Query, double>>();
 
             lock(queriesLock)
-            { 
+            {
                 //Find all feature groups
-                List<string> queryFeatureNames = Queries.Select(p => p.Key.Feature.Name).Distinct().ToList();
+                List<string> queryFeatureNames = Queries.ToList().Select(p => p.Key.Feature.Name).Distinct().ToList();
 
                 //Get average reward for each feature
                 Dictionary<string, double> featuresExpectedReward = new Dictionary<string, double>();
@@ -378,6 +380,7 @@ namespace RLDT
 
                         //Create the possibly new query
                         Query newQuery = new Query(theFeature, dataVector.Label);
+                        newQuery.OnRemoveSelf += Query_OnRemoveSelf;
 
                         //Try to add the query
                         if (!Queries.ContainsKey(newQuery))
@@ -393,7 +396,7 @@ namespace RLDT
                 AdjustLabels(dataVector.Label);
             }
         }
-        
+
         /// <summary>
         /// Generates the hashcode of this state as if it includes an additional feature.
         /// </summary>
@@ -430,7 +433,35 @@ namespace RLDT
             }
         }
 
+        //Events
+        private void FeatureValuePair_OnRequestRemoved(object sender, EventArgs e)
+        {
+            FeatureValuePair fvp = (FeatureValuePair)sender;
+            //Remove the feature from the list of features.
+            this.Features.Remove(fvp);
 
+            //This state is no longer valid, so alert parents to remove it.
+            RemoveSelf();
+            Dispose();
+        }
+        private void Query_OnRemoveSelf(object sender, EventArgs e)
+        {
+            Query theQuery = (Query)sender;
+
+            //Remove the query from the list of queries
+            this.Queries.Remove(theQuery);
+        }
+        private void Label_OnRemoveSelf(object sender, EventArgs e)
+        {
+            FeatureValuePair theLabel = (FeatureValuePair)sender;
+            //Remove the specified label from the list of labels.
+            this.Labels.Remove(theLabel);
+        }
+        public void RemoveSelf()
+        {
+            OnRemoveSelf?.Invoke(this, new EventArgs());
+        }
+        public event EventHandler OnRemoveSelf;
 
         //Overrides
         /// <summary>
@@ -474,5 +505,41 @@ namespace RLDT
                 return string.Join(";", features.OrderBy(p => p.Name).Select(p => (p.Name + ":" + p.Value)));
             }
         }
+
+        #region IDisposable Support
+        public bool IsDisposed { get { return disposedValue; } }
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects).
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+                // TODO: set large fields to null.
+
+                disposedValue = true;
+            }
+        }
+
+        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        // ~DataVector() {
+        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+        //   Dispose(false);
+        // }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // TODO: uncomment the following line if the finalizer is overridden above.
+            // GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

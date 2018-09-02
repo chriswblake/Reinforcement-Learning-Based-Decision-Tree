@@ -16,9 +16,6 @@ namespace RLDT
     public class Policy
     {
         //Fields
-        /// <summary>
-        /// Used for deciding a random query or the query with highest expected reward.
-        /// </summary>
         private Random rand = new Random();
         private double _ExplorationRate = 0.0;
         private double _DiscountFactor = 0.8;
@@ -26,8 +23,6 @@ namespace RLDT
         private bool _ParallelPathUpdatesEnabled = true;
         private int _QueriesLimit = 10000;
         private TreeNode _DecisionTree = null;
-
-
 
         //Properties
         /// <summary>
@@ -170,6 +165,17 @@ namespace RLDT
 
         //Methods - Training
         /// <summary>
+        /// Adds a given state to the state space, then subscribes to the inner self-removal event.
+        /// </summary>
+        /// <param name="theState"></param>
+        /// <param name="trainingDetails"></param>
+        private void AddState(State theState, TrainingStats trainingDetails)
+        {
+            StateSpace.Add(theState.GetHashCode(), theState); trainingDetails.StatesCreated++;
+            theState.OnRemoveSelf += State_OnRemoveSelf;
+        }
+
+        /// <summary>
         /// Updates the network of states used for deciding the label of a future datavector. A training datavector
         /// is provided which contains all features, values, relative rewards, and the correct classification label.
         /// </summary>
@@ -188,8 +194,9 @@ namespace RLDT
             { 
                 if (StateSpace.Count == 0)
                 {
-                    State newState = new State(dataVector);
-                    StateSpace.Add(newState.GetHashCode(), newState); trainingDetails.StatesCreated++;
+                    AddState(new State(dataVector), trainingDetails);
+                    //State newState = new State(dataVector);
+                    //StateSpace.Add(newState.GetHashCode(), newState); trainingDetails.StatesCreated++;
                 }
             }
 
@@ -255,7 +262,7 @@ namespace RLDT
                 {
                     //Create a new state
                     nextState = new State(currentState, recommendedQuery.Feature, dataVector);
-                    StateSpace.Add(nextState.GetHashCode(), nextState); trainingDetails.StatesCreated++;
+                    AddState(nextState, trainingDetails);
                 }
             }
 
@@ -316,7 +323,8 @@ namespace RLDT
 
                         //Create a new state
                         prevState = new State(prevStateFeatures, dataVector);
-                        StateSpace.Add(prevState.GetHashCode(), prevState); trainingDetails.StatesCreated++;
+                        AddState(prevState, trainingDetails);
+                        //StateSpace.Add(prevState.GetHashCode(), prevState); trainingDetails.StatesCreated++;
                         continue;
                     }
                 }
@@ -332,39 +340,53 @@ namespace RLDT
             }
         }
 
-        public void RemoveFeatureValuePair(FeatureValuePair fvp)
-        {
-            ///This Method is far from ideal! It checks every state to see
-            ///if it is affected. This should be replaced!
 
-            lock(stateSpacesLock)
-            { 
-                foreach (var s in this.StateSpace.ToList())
-                {
-                    State theState = s.Value;
+        
+        //public void RemoveFeatureValuePair_Old(FeatureValuePair fvp)
+        //{
+        //    ///This Method is far from ideal! It checks every state to see
+        //    ///if it is affected. This should be replaced!
 
-                    //Remove states with this feature
-                    if (theState.Features.Contains(fvp))
-                    {
-                        this.StateSpace.Remove(s.Key);
-                        continue;
-                    }
+        //    lock(stateSpacesLock)
+        //    { 
+        //        foreach (var s in this.StateSpace.ToList())
+        //        {
+        //            State theState = s.Value;
+
+        //            //Remove states with this feature
+        //            if (theState.Features.Contains(fvp))
+        //            {
+        //                this.StateSpace.Remove(s.Key);
+        //                continue;
+        //            }
                         
-                    //Remove queries from other states
-                    foreach (Query theQuery in theState.Queries.Keys)
-                    {
-                        if (theQuery.Feature.Equals(fvp))
-                        {
-                            theState.Queries.Remove(theQuery);
-                            break;
-                        }
-                    }
+        //            //Remove queries from other states
+        //            foreach (Query theQuery in theState.Queries.Keys.ToList())
+        //            {
+        //                if (theQuery.Feature.Equals(fvp))
+        //                {
+        //                    theState.Queries.Remove(theQuery);
+        //                    break;
+        //                }
+        //            }
 
-                    //Remove labels
-                    if(theState.Labels.ContainsKey(fvp))
-                        theState.Labels.Remove(fvp);
-                }
-            }
+        //            //Remove labels
+        //            if(theState.Labels.ContainsKey(fvp))
+        //                theState.Labels.Remove(fvp);
+        //        }
+        //    }
+        //}
+
+        /// <summary>
+        /// Allows a state to remove itself from the state space.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void State_OnRemoveSelf(object sender, EventArgs e)
+        {
+            State theState = (State)sender;
+            //Remove the state from the state space.
+            StateSpace.Remove(theState.GetHashCode());
         }
 
 
@@ -507,7 +529,7 @@ namespace RLDT
                 foreach (FeatureValuePair uniqueFeature in bestGroupQueries.Select(p=>p.Key.Feature).Distinct())
                 {
                     //Create node
-                    TreeNode valueNode = new TreeNode(uniqueFeature.Value.ToString(), TreeNodeType.Value);
+                    TreeNode valueNode = new TreeNode(uniqueFeature.Value, TreeNodeType.Value);
 
                     //Add group
                     groupNode.SubNodes.Add(valueNode);

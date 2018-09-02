@@ -55,16 +55,46 @@ namespace RLDT
             //Build list of features.
             Features = new List<FeatureValuePairWithImportance>().Cast<FeatureValuePair>().ToList();
             for (int i = 0; i < headers.Length; i++)
-                Features.Add(new FeatureValuePairWithImportance(headers[i], dataobjects[i], importance[i]));
+            {
+                FeatureValuePairWithImportance fvpw = new FeatureValuePairWithImportance(headers[i], dataobjects[i], importance[i]);
+                Features.Add(fvpw);
+                fvpw.OnRemoveSelf += FeatureWithImportance_OnRemoveSelf;
+            }
 
             //Find feature with label
             FeatureValuePair labelFeature = Features.Find(f => f.Name == labelFeatureName);
+            labelFeature.OnRemoveSelf += Label_OnRemoveSelf;
 
             //Copy to data label
             Label = new FeatureValuePair(labelFeature.Name, labelFeature.Value);
 
             //Remove from the list of features
             Features.RemoveAll(p => p.Name == Label.Name);
+        }
+
+        //Events
+        private void Label_OnRemoveSelf(object sender, EventArgs e)
+        {
+            //Remove the label
+            this.Label = null;
+
+            //Tell any parent items to remove this datavector.
+            RemoveSelf();
+
+            //Mark this datavector as disposed
+            Dispose();
+        }
+        private void FeatureWithImportance_OnRemoveSelf(object sender, EventArgs e)
+        {
+            //Remove the feature from this datavector
+            FeatureValuePairWithImportance fpvw = (FeatureValuePairWithImportance)sender;
+            Features.Remove(fpvw);
+
+            //Tell any parent items to remove this datavector.
+            RemoveSelf();
+
+            //Mark this datavector as disposed
+            Dispose();
         }
 
         //Debug

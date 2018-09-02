@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RLDT
 {
-    public class DataVector
+    public class DataVector : IDisposable, IRemoveSelf
     {
         //Properties
         /// <summary>
@@ -53,7 +53,10 @@ namespace RLDT
             //Build list of features. 
             for (int i = 0; i < headers.Length; i++)
             {
-                Features.Add(new FeatureValuePair(headers[i], dataobjects[i]));
+                FeatureValuePair fvp = new FeatureValuePair(headers[i], dataobjects[i]);
+                Features.Add(fvp);
+                fvp.OnRemoveSelf += Feature_OnRemoveSelf;
+
             }
         }
 
@@ -65,5 +68,59 @@ namespace RLDT
             return s;
 
         }
+
+        //Events
+        protected void Feature_OnRemoveSelf(object sender, EventArgs e)
+        {
+            //Remove the feature from this datavector
+            FeatureValuePair theFeature = (FeatureValuePair)sender;
+            Features.Remove(theFeature);
+
+            //This datavector is invalid. Tell any parent items to remove it.
+            RemoveSelf();
+            Dispose();
+        }
+        public event EventHandler OnRemoveSelf;
+        public void RemoveSelf()
+        {
+            OnRemoveSelf?.Invoke(this, new EventArgs());
+        }
+
+        #region IDisposable Support
+        public bool IsDisposed { get { return disposedValue; } }
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects).
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+                // TODO: set large fields to null.
+
+                disposedValue = true;
+            }
+        }
+
+        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        // ~DataVector() {
+        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+        //   Dispose(false);
+        // }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // TODO: uncomment the following line if the finalizer is overridden above.
+            // GC.SuppressFinalize(this);
+        }
+        #endregion
+
     }
 }

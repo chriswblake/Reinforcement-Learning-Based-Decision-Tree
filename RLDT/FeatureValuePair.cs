@@ -36,21 +36,21 @@ namespace RLDT
             this.Name = name;
             this.Value = value;
 
-            //Subscribe to RemoveSelf event, if it exists.
-            if (value.GetType().GetInterface("IRemoveSelf") != null)
-            {
-                //Retrieve event from value
-                EventInfo eventInfo = value.GetType().GetEvent("OnRemoveSelf");
+            ////Subscribe to RemoveSelf event, if it exists.
+            //if (value.GetType().GetInterface("IRemoveSelf") != null)
+            //{
+            //    //Retrieve event from value
+            //    EventInfo eventInfo = value.GetType().GetEvent("OnRemoveSelf");
 
-                //Convert to delegate
-                Type tDelegate = eventInfo.EventHandlerType;
-                MethodInfo miHandler = typeof(FeatureValuePair).GetMethod("Value_OnRemoveSelf",
-                        BindingFlags.NonPublic | BindingFlags.Instance);
-                Delegate d = Delegate.CreateDelegate(tDelegate, this, miHandler);
+            //    //Convert to delegate
+            //    Type tDelegate = eventInfo.EventHandlerType;
+            //    MethodInfo miHandler = typeof(FeatureValuePair).GetMethod("Value_OnRemoveSelf",
+            //            BindingFlags.NonPublic | BindingFlags.Instance);
+            //    Delegate d = Delegate.CreateDelegate(tDelegate, this, miHandler);
                 
-                //Subscribe to the event
-                eventInfo.GetAddMethod().Invoke(value, new object[] { d });
-            }
+            //    //Subscribe to the event
+            //    eventInfo.GetAddMethod().Invoke(value, new object[] { d });
+            //}
         }
         
         //Overrides

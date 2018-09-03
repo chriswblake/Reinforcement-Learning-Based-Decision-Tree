@@ -261,7 +261,14 @@ namespace RLDT.DecisionTree
             if (propName == "ToString" || propName == null)
                 return src.ToString();
 
-            return src.GetType().GetProperty(propName).GetValue(src, null);
+            try
+            { 
+                return src.GetType().GetProperty(propName).GetValue(src, null);
+            }
+            catch
+            {
+                return src.ToString();
+            }
         }
 
         /// <summary>

@@ -8,7 +8,7 @@ namespace RLDT
     /// A combination of feature and related label. A list of queries is usually used for tracking possible
     /// transitions from state to state.
     /// </summary>
-    public class Query : IRemoveSelf, IDisposable
+    public class Query
     {
         //Properties
         /// <summary>
@@ -24,36 +24,18 @@ namespace RLDT
         //Constructors
         public Query(FeatureValuePair datavectorFeature, FeatureValuePair label)
         {
+            //Check for nulls
+            if (datavectorFeature == null || label == null)
+                throw new ArgumentException("Parameters cannot be null.");
+            if (datavectorFeature.Name == null || datavectorFeature.Value == null)
+                throw new ArgumentException("DatavectorFeature's Name and Value parameters cannot be null.");
+            if (label.Name == null || label.Value == null)
+                throw new ArgumentException("Labels's Name and Value parameters cannot be null.");
+
+            //Save parameters
             this.Feature = new FeatureValuePair(datavectorFeature.Name, datavectorFeature.Value); //To prevent additional details being stored by a derived object.
             this.Label = new FeatureValuePair(label.Name, label.Value);
-
-            this.Feature.OnRemoveSelf += Feature_OnRemoveSelf;
-            this.Label.OnRemoveSelf += Label_OnRemoveSelf;
         }
-
-        //Events
-        private void Feature_OnRemoveSelf(object sender, EventArgs e)
-        {
-            //Remove the feature
-            this.Feature = null;
-
-            //This query is no longer valid, so tell any parent to remove it.
-            RemoveSelf();
-            Dispose();
-        }
-        private void Label_OnRemoveSelf(object sender, EventArgs e)
-        {
-            //Remove the label
-            this.Label = null;
-            //This query is no longer valid, so tell any parent to remove it.
-            RemoveSelf();
-            Dispose();
-        }
-        public void RemoveSelf()
-        {
-            OnRemoveSelf?.Invoke(this, new EventArgs());
-        }
-        public event EventHandler OnRemoveSelf;
 
         //Overrides
         public override string ToString()
@@ -74,41 +56,5 @@ namespace RLDT
             return this.Feature.Equals(that.Feature)
                 && this.Label.Equals(that.Label);
         }
-
-        #region IDisposable Support
-        public bool IsDisposed { get { return disposedValue; } }
-        private bool disposedValue = false; // To detect redundant calls
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects).
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
-                disposedValue = true;
-            }
-        }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~DataVector() {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
-        }
-        #endregion
     }
 }

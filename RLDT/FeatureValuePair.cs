@@ -8,7 +8,7 @@ namespace RLDT
     /// <summary>
     /// A combination of feature name and its respective value.
     /// </summary>
-    public class FeatureValuePair : IDisposable, IRemoveSelf
+    public class FeatureValuePair
     {
         //Properties
         /// <summary>
@@ -28,6 +28,11 @@ namespace RLDT
         /// <param name="value">The value of the feature.</param>
         public FeatureValuePair(string name, object value)
         {
+            //Check for nulls
+            if (name == null || value == null)
+                throw new ArgumentException("Parameters cannot be null.");
+
+            //Save parameters
             this.Name = name;
             this.Value = value;
 
@@ -48,7 +53,6 @@ namespace RLDT
             }
         }
         
-
         //Overrides
         public override string ToString()
         {
@@ -68,58 +72,6 @@ namespace RLDT
             return this.Name.Equals(that.Name)
                 && this.Value.Equals(that.Value);
         }
-
-        //Event
-        private void Value_OnRemoveSelf(object sender, EventArgs e)
-        {
-            //Remove the value
-            this.Value = null;
-
-            //This feature value pair is no longer valid, so tell parent items to remove it also.
-            RemoveSelf();
-            Dispose();
-        }
-        public void RemoveSelf()
-        {
-            OnRemoveSelf?.Invoke(this, new EventArgs());
-        }
-        public event EventHandler OnRemoveSelf;
-
-        #region IDisposable Support
-        public bool IsDisposed { get { return disposedValue; } }
-        private bool disposedValue = false; // To detect redundant calls
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects).
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
-                disposedValue = true;
-            }
-        }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~DataVector() {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
-        }
-        #endregion
     }
 
 }

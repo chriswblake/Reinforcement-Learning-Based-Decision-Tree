@@ -24,6 +24,9 @@ namespace RLDT
         private int _QueriesLimit = 10000;
         private TreeNode _DecisionTree = null;
 
+        //Locks
+        private Object processLock = new object();
+
         //Properties
         /// <summary>
         /// All of the possible states that have been explored. All states are stored using their hashcode, to avoid enumerating a list.
@@ -38,8 +41,7 @@ namespace RLDT
         {
             get
             {
-                lock(stateSpacesLock)
-                    return StateSpace.Count;
+                return StateSpace.Count;
             }
         }
 
@@ -157,11 +159,40 @@ namespace RLDT
         }
 
 
+        public HashSet<State> removedStates = new HashSet<State>();
+        public HashSet<Query> removedQueries = new HashSet<Query>();
+        public HashSet<FeatureValuePair> removedLabels = new HashSet<FeatureValuePair>();
 
-        //Locks
-        private Object stateSpacesLock = new object();
 
 
+        //Events
+        
+
+        private void State_OnRemoveState(object sender, PolicyChangeEventArgs e)
+        {
+            lock (processLock)
+            {
+                this.StateSpace.Remove(e.State.GetHashCode());
+                removedStates.Add(e.State);
+            }
+                
+        }
+        private void State_OnRemoveQuery(object sender, PolicyChangeEventArgs e)
+        {
+            lock (processLock)
+            {
+                e.State.RemoveQuery(e.Query);
+                removedQueries.Add(e.Query);
+            }
+        }
+        private void State_OnRemoveLabel(object sender, PolicyChangeEventArgs e)
+        {
+            lock (processLock)
+            {
+                e.State.RemoveLabel(e.Label);
+                removedLabels.Add(e.Label);
+            }
+        }
 
         //Methods - Training
         /// <summary>
@@ -171,8 +202,14 @@ namespace RLDT
         /// <param name="trainingDetails"></param>
         private void AddState(State theState, TrainingStats trainingDetails)
         {
-            StateSpace.Add(theState.GetHashCode(), theState); trainingDetails.StatesCreated++;
-            theState.OnRemoveSelf += State_OnRemoveSelf;
+            lock (processLock)
+            {
+                theState.OnRemoveState += State_OnRemoveState;
+                theState.OnRemoveQuery += State_OnRemoveQuery;
+                theState.OnRemoveLabel += State_OnRemoveLabel;
+
+                StateSpace.Add(theState.GetHashCode(), theState); trainingDetails.StatesCreated++;
+            }
         }
 
         /// <summary>
@@ -183,32 +220,33 @@ namespace RLDT
         /// <returns>The statistics of the learning process. See "TrainingStats" class for more details.</returns>
         public TrainingStats Learn(DataVectorTraining dataVector)
         {
-            //Clear current decision tree
-            DecisionTree = null;
+            lock(processLock)
+            {
+                //Check datavector
+                dataVector.Features.RemoveAll(p => p.Value == null);
+                if (dataVector.Features.Count == 0 || dataVector.Label == null || dataVector.Label.Value == null)
+                    return new TrainingStats();
 
-            //Training statistics
-            TrainingStats trainingDetails = new TrainingStats();
+                //Clear current decision tree
+                DecisionTree = null;
 
-            //Create root state, if it does not exist
-            lock(stateSpacesLock)
-            { 
+                //Training statistics
+                TrainingStats trainingDetails = new TrainingStats();
+
+                //Create root state, if it does not exist
                 if (StateSpace.Count == 0)
-                {
                     AddState(new State(dataVector), trainingDetails);
-                    //State newState = new State(dataVector);
-                    //StateSpace.Add(newState.GetHashCode(), newState); trainingDetails.StatesCreated++;
-                }
+
+                //Start with root state
+                State rootState = StateSpace[0]; // 0 is the hashcode for a state with no features.
+                Learn(rootState, dataVector, 0, trainingDetails);
+
+                //Statistics
+                trainingDetails.StatesTotal = StateSpace.Count;
+
+                //Return
+                return trainingDetails;
             }
-
-            //Start with root state
-            State rootState = StateSpace[0]; // 0 is the hashcode for a state with no features.
-            Learn(rootState, dataVector, 0, trainingDetails);
-
-            //Statistics
-            trainingDetails.StatesTotal = StateSpace.Count;
-
-            //Return
-            return trainingDetails;
         }
 
         /// <summary>
@@ -221,38 +259,38 @@ namespace RLDT
         /// <param name="trainingDetails">Provides statistics of the learning process.</param>
         private void Learn(State currentState, DataVectorTraining dataVector, int totalQueries, TrainingStats trainingDetails)
         {
-            //Choose random or best query
-            Query recommendedQuery = null;
-            if (rand.NextDouble() < ExplorationRate) //Pick random query 10% of the time 
+            lock(processLock)
             {
-                //Pick random query
-                Query randomQuery = currentState.GetRandomQuery(dataVector, rand);
-                recommendedQuery = randomQuery;
-            }
-            else
-            {
-                //Find best query
-                Query bestQuery = currentState.GetBestQuery(dataVector);
-                recommendedQuery = bestQuery;
-            }
+                //Choose random or best query
+                Query recommendedQuery = null;
+                if (rand.NextDouble() < ExplorationRate) //Pick random query 10% of the time 
+                {
+                    //Pick random query
+                    Query randomQuery = currentState.GetRandomQuery(dataVector, rand);
+                    recommendedQuery = randomQuery;
+                }
+                else
+                {
+                    //Find best query
+                    Query bestQuery = currentState.GetBestQuery(dataVector);
+                    recommendedQuery = bestQuery;
+                }
 
-            //Check total queries
-            if (totalQueries > QueriesLimit)
-                recommendedQuery = null;
+                //Check total queries
+                if (totalQueries > QueriesLimit)
+                    recommendedQuery = null;
 
-            //Adjust expected reward of labels
-            if (recommendedQuery == null || ParallelReportUpdatesEnabled)
-                currentState.AdjustLabels(dataVector.Label);
+                //Adjust expected reward of labels
+                if (recommendedQuery == null || ParallelReportUpdatesEnabled)
+                    currentState.AdjustLabels(dataVector.Label);
 
-            //If no query, then end training for this datapoint
-            if (recommendedQuery == null)
-                return;
+                //If no query, then end training for this datapoint
+                if (recommendedQuery == null)
+                    return;
 
-            //Search for next state, or create it
-            State nextState = null;
-            int nextHashCode = currentState.GetHashCodeWith(recommendedQuery.Feature);
-            lock (stateSpacesLock)
-            { 
+                //Search for next state, or create it
+                State nextState = null;
+                int nextHashCode = currentState.GetHashCodeWith(recommendedQuery.Feature);
                 if (StateSpace.ContainsKey(nextHashCode))
                 {
                     //Get existing state
@@ -264,27 +302,27 @@ namespace RLDT
                     nextState = new State(currentState, recommendedQuery.Feature, dataVector);
                     AddState(nextState, trainingDetails);
                 }
-            }
 
-            //Process next state, to get adjustment for selected query
-            Learn(nextState, dataVector, totalQueries+1, trainingDetails); trainingDetails.QueriesTotal++;
+                //Process next state, to get adjustment for selected query
+                Learn(nextState, dataVector, totalQueries+1, trainingDetails); trainingDetails.QueriesTotal++;
 
-            //Update State's Query's expected reward
-            if (ParallelQueryUpdatesEnabled)
-            {
-                //Update all queries that lead to this next state
-                ParallelPathsUpdate(nextState, dataVector, trainingDetails);
-            }
-            else
-            {
-                //Update just current state's query
-                double featureReward = dataVector[recommendedQuery.Feature.Name].Importance;
-                double nextStateLabelReward = nextState.Labels[dataVector.Label];
-                currentState.AdjustQuery(recommendedQuery, nextStateLabelReward, featureReward, DiscountFactor);
-            }
+                //Update State's Query's expected reward
+                if (ParallelQueryUpdatesEnabled)
+                {
+                    //Update all queries that lead to this next state
+                    ParallelPathsUpdate(nextState, dataVector, trainingDetails);
+                }
+                else
+                {
+                    //Update just current state's query
+                    double featureReward = dataVector[recommendedQuery.Feature.Name].Importance;
+                    double nextStateLabelReward = nextState.Labels[dataVector.Label];
+                    currentState.AdjustQuery(recommendedQuery, nextStateLabelReward, featureReward, DiscountFactor);
+                }
             
-            //Return
-            return;
+                //Return
+                return;
+            }
         }
 
         /// <summary>
@@ -294,20 +332,20 @@ namespace RLDT
         /// <param name="dataVector">The relevant datavector for trainging.</param>
         private void ParallelPathsUpdate(State nextState, DataVectorTraining dataVector, TrainingStats trainingDetails)
         {
-            //Get current expected reward of label
-            double nextStateLabelReward = nextState.Labels[dataVector.Label];
-
-            //Adjust queries in states that point to this "nextState".
-            List<FeatureValuePair> nextStateFeatures = nextState.Features.ToList();
-            foreach (FeatureValuePair theFeature in nextStateFeatures)
+            lock(processLock)
             {
-                //Generate hashcode of a state that is missing this feature. i.e. A state that is only different by one feature, so it could lead to this state.
-                int stateHashcode = nextState.GetHashCodeWithout(theFeature);
+                //Get current expected reward of label
+                double nextStateLabelReward = nextState.Labels[dataVector.Label];
 
-                //If the state exists, get it.
-                State prevState = null;
-                lock (stateSpacesLock)
-                { 
+                //Adjust queries in states that point to this "nextState".
+                List<FeatureValuePair> nextStateFeatures = nextState.Features.ToList();
+                foreach (FeatureValuePair theFeature in nextStateFeatures)
+                {
+                    //Generate hashcode of a state that is missing this feature. i.e. A state that is only different by one feature, so it could lead to this state.
+                    int stateHashcode = nextState.GetHashCodeWithout(theFeature);
+
+                    //If the state exists, get it.
+                    State prevState = null;
                     if (StateSpace.ContainsKey(stateHashcode))
                     {
                         //Get the state
@@ -327,70 +365,20 @@ namespace RLDT
                         //StateSpace.Add(prevState.GetHashCode(), prevState); trainingDetails.StatesCreated++;
                         continue;
                     }
+
+                    //Create the query to update
+                    Query theQuery = new Query(theFeature, dataVector.Label);
+
+                    //Get reward from datavector for querying this feature
+                    double featureReward = dataVector[theFeature.Name].Importance;
+
+                    //Adjust the query
+                    prevState.AdjustQuery(theQuery, nextStateLabelReward, featureReward, DiscountFactor);
                 }
-
-                //Create the query to update
-                Query theQuery = new Query(theFeature, dataVector.Label);
-
-                //Get reward from datavector for querying this feature
-                double featureReward = dataVector[theFeature.Name].Importance;
-
-                //Adjust the query
-                prevState.AdjustQuery(theQuery, nextStateLabelReward, featureReward, DiscountFactor);
             }
+
         }
 
-
-        
-        //public void RemoveFeatureValuePair_Old(FeatureValuePair fvp)
-        //{
-        //    ///This Method is far from ideal! It checks every state to see
-        //    ///if it is affected. This should be replaced!
-
-        //    lock(stateSpacesLock)
-        //    { 
-        //        foreach (var s in this.StateSpace.ToList())
-        //        {
-        //            State theState = s.Value;
-
-        //            //Remove states with this feature
-        //            if (theState.Features.Contains(fvp))
-        //            {
-        //                this.StateSpace.Remove(s.Key);
-        //                continue;
-        //            }
-                        
-        //            //Remove queries from other states
-        //            foreach (Query theQuery in theState.Queries.Keys.ToList())
-        //            {
-        //                if (theQuery.Feature.Equals(fvp))
-        //                {
-        //                    theState.Queries.Remove(theQuery);
-        //                    break;
-        //                }
-        //            }
-
-        //            //Remove labels
-        //            if(theState.Labels.ContainsKey(fvp))
-        //                theState.Labels.Remove(fvp);
-        //        }
-        //    }
-        //}
-
-        /// <summary>
-        /// Allows a state to remove itself from the state space.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void State_OnRemoveSelf(object sender, EventArgs e)
-        {
-            State theState = (State)sender;
-            //Remove the state from the state space.
-            StateSpace.Remove(theState.GetHashCode());
-        }
-
-
-        //Methods - Classification
         /// <summary>
         /// Uses the resulting "DecisionTree", summarized from the policy, to quickly classify a given datavector.
         /// </summary>
@@ -523,7 +511,7 @@ namespace RLDT
                 parentNode.SubNodes.Add(groupNode);
             }
 
-            //Add queries
+            //Add queries, as subnodes
             if (bestGroupQueriesFiltered.Count > 0)
             {
                 foreach (FeatureValuePair uniqueFeature in bestGroupQueries.Select(p=>p.Key.Feature).Distinct())
@@ -537,19 +525,16 @@ namespace RLDT
 
                     //Find next state and modify node
                     int nextStateHashCode = currentState.GetHashCodeWith(uniqueFeature);
-                    lock(stateSpacesLock)
+                    if(StateSpace.ContainsKey(nextStateHashCode))
                     { 
-                        if(StateSpace.ContainsKey(nextStateHashCode))
-                        { 
-                            State nextState = StateSpace[nextStateHashCode];
-                            ToDecisionTree(nextState, valueNode, treeSettings);
-                        }
+                        State nextState = StateSpace[nextStateHashCode];
+                        ToDecisionTree(nextState, valueNode, treeSettings);
                     }
 
                 }
             }
 
-            //Add Labels
+            //Add labels, as leaves
             if (bestGroupQueriesFiltered.Count == 0 || treeSettings.ShowSubScores)
                 foreach (var theLabel in currentState.Labels)
                 {

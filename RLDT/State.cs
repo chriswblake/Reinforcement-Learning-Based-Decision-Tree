@@ -14,7 +14,7 @@ namespace RLDT
     /// Labels are used for classifying a datavector that would visit this state.
     /// Queries and Labels can be compared to determine an action, such as moving to a next state or reporting a label.
     /// </summary>
-    public class State : IRemoveSelf, IDisposable
+    public class State
     {
         //Properties
         /// <summary>
@@ -22,7 +22,7 @@ namespace RLDT
         /// The dictionary key is the actual featurepair.
         /// The dictionary value is the expected reward (percentage occurence).
         /// </summary>
-        public Dictionary<FeatureValuePair, double> Labels { get;} //double => expected reward
+        public Dictionary<FeatureValuePair, double> Labels { get; set; } //double => expected reward
 
         /// <summary>
         /// A count of each label that has been experience at this state. If the count goes above 10000, it is automatically reduced by a factor of 10.
@@ -57,11 +57,6 @@ namespace RLDT
         /// 1.0 => even distribution over all labels
         /// </summary>
         public double GiniImpurity { get; set;  }
-
-        //Locks
-        private Object labelsLock = new object();
-        private Object featuresLock = new object();
-        private Object queriesLock = new object();
         
         //Constructors
         /// <summary>
@@ -72,6 +67,13 @@ namespace RLDT
         /// <param name="dataVector"></param>
         public State(State original, FeatureValuePair additionalFeature, DataVectorTraining dataVector) : this(original, dataVector)
         {
+            ////Check for disposed and null
+            //if (additionalFeature == null)
+            //    throw new ArgumentNullException("additionalFeature");
+            //if (additionalFeature.IsDisposed)
+            //    throw new ArgumentException("Parameter is disposed.", "additionalFeature");
+
+            //Add the feature
             AddFeature(additionalFeature);
         }
 
@@ -82,6 +84,12 @@ namespace RLDT
         /// <param name="dataVector"></param>
         public State(State original, DataVectorTraining dataVector) :this(dataVector)
         {
+            ////Check for disposed and null
+            //if (original == null)
+            //    throw new ArgumentNullException("original");
+            //if (original.IsDisposed)
+            //    throw new ArgumentException("Parameter is disposed.", "original");
+
             //Add features from original. The list can't be directly copied because of synchronization with the queries list.
             foreach (FeatureValuePair theFeature in original.Features)
                 AddFeature(theFeature);
@@ -94,6 +102,12 @@ namespace RLDT
         /// <param name="dataVector">An example data vector to create initial queries.</param>
         public State(List<FeatureValuePair> features, DataVectorTraining dataVector) : this(dataVector)
         {
+            ////Check for disposed and null
+            //if (features == null)
+            //    throw new ArgumentNullException("features");
+            //if (features.Where(p=>p.IsDisposed).ToList().Count > 0)
+            //    throw new ArgumentException("Features may not be disposed.", "features");
+
             //Add features
             foreach (FeatureValuePair theFeature in features)
                 AddFeature(theFeature);
@@ -105,6 +119,12 @@ namespace RLDT
         /// <param name="dataVector"></param>
         public State(DataVectorTraining dataVector)
         {
+            ////Check for disposed and null
+            //if (dataVector == null)
+            //    throw new ArgumentNullException("dataVector");
+            //if (dataVector.IsDisposed)
+            //    throw new ArgumentException("Parameter is disposed.", "dataVector");
+
             this.Features = new HashSet<FeatureValuePair>();
             this.FeatureNames = new HashSet<string>();
             this.Queries = new Dictionary<Query, double>();
@@ -123,23 +143,16 @@ namespace RLDT
         /// <param name="theFeature"></param>
         private void AddFeature(FeatureValuePair theFeature)
         {
-            lock(featuresLock)
-            {
-                //Add to list of features
-                FeatureValuePair fvp = new FeatureValuePair(theFeature.Name, theFeature.Value); //copy to prevent storing derived classes such as FeatureValuePairWithImportance
-                Features.Add(fvp); 
-                FeatureNames.Add(theFeature.Name);
-                fvp.OnRemoveSelf += FeatureValuePair_OnRequestRemoved;
-            }
+            //Add to list of features
+            FeatureValuePair fvp = new FeatureValuePair(theFeature.Name, theFeature.Value); //copy to prevent storing derived classes such as FeatureValuePairWithImportance
+            Features.Add(fvp); 
+            FeatureNames.Add(theFeature.Name);
 
             //Remove queries with same feature name
-            lock (queriesLock)
-            { 
-                foreach (var q in Queries.ToList())
-                {
-                    if (q.Key.Feature.Name == theFeature.Name)
-                        Queries.Remove(q.Key);
-                }
+            foreach (var q in Queries.ToList())
+            {
+                if (q.Key.Feature.Name == theFeature.Name)
+                    Queries.Remove(q.Key);
             }
         }
         
@@ -149,50 +162,46 @@ namespace RLDT
         /// <param name="correctLabel"></param>
         public void AdjustLabels(FeatureValuePair correctLabel)
         {
-            lock(labelsLock)
+            //Check impurity. If it is very high, reset the labels.
+            if (GiniImpurity > 0.99)
             {
-                //Check impurity. If it is very high, reset the labels.
-                if (GiniImpurity > 0.99)
-                {
-                    foreach (var l in Labels.ToList())
-                    {
-                        Labels[l.Key] = 0;
-                        LabelsCount[l.Key] = 0;
-                    }
-                }
-
-                //Reduce label counts occasionally (to prevent going to infinity)
-                if (LabelsCount.Sum(p => p.Value) > 10000)
-                {                  
-                    foreach (FeatureValuePair label in Labels.Select(p => p.Key))
-                    {
-                        LabelsCount[label] /= 10;
-                    }
-                }
-
-                //Add missing label
-                if (!Labels.ContainsKey(correctLabel))
-                {
-                    Labels.Add(correctLabel, 0.0);
-                    LabelsCount.Add(correctLabel, 0);
-                    correctLabel.OnRemoveSelf += Label_OnRemoveSelf; ;
-                }
-
-                //Increase experiences of label
-                LabelsCount[correctLabel]++;
-
-                //Recalculate percentages and gini impurity
-                double sumCount = LabelsCount.Sum(p=> p.Value);               
-                double sumGini = 0;
                 foreach (var l in Labels.ToList())
                 {
-                    double labelPercent = LabelsCount[l.Key] / (sumCount); // 0.0 to 1.0
-                    Labels[l.Key] = labelPercent;
-                    sumGini += Math.Pow(labelPercent, 2.0);
+                    Labels[l.Key] = 0;
+                    LabelsCount[l.Key] = 0;
                 }
-                double maxGini = 1.00000001 - (1.0 / Labels.Count); // 0.000001 prevents division by zero.
-                GiniImpurity = (1 - sumGini) / maxGini;
             }
+
+            //Reduce label counts occasionally (to prevent going to infinity)
+            if (LabelsCount.Sum(p => p.Value) > 10000)
+            {                  
+                foreach (FeatureValuePair label in Labels.Select(p => p.Key))
+                {
+                    LabelsCount[label] /= 10;
+                }
+            }
+
+            //Add missing label
+            if (!Labels.ContainsKey(correctLabel))
+            {
+                Labels.Add(correctLabel, 0.0);
+                LabelsCount.Add(correctLabel, 0);
+            }
+
+            //Increase experiences of label
+            LabelsCount[correctLabel]++;
+
+            //Recalculate percentages and gini impurity
+            double sumCount = LabelsCount.Sum(p=> p.Value);               
+            double sumGini = 0;
+            foreach (var l in Labels.ToList())
+            {
+                double labelPercent = LabelsCount[l.Key] / (sumCount); // 0.0 to 1.0
+                Labels[l.Key] = labelPercent;
+                sumGini += Math.Pow(labelPercent, 2.0);
+            }
+            double maxGini = 1.00000001 - (1.0 / Labels.Count); // 0.000001 prevents division by zero.
+            GiniImpurity = (1 - sumGini) / maxGini;
         }
 
         /// <summary>
@@ -205,14 +214,11 @@ namespace RLDT
         /// <param name="discountFactor">The rate of value transfer. (0 to 1)</param>
         public void AdjustQuery(Query theQuery, double nextStateLabelExpectedReward, double featureReward, double discountFactor)
         {
-            lock(queriesLock)
-            { 
-                //Convert feature reward to multiplier
-                double featureMultiplier = featureReward + 1; // Example: -0.3 => 0.7 (less desireable feature)      0 => 1 (neutral)        0.9 => 1.9 (more desireable feature)
+            //Convert feature reward to multiplier
+            double featureMultiplier = featureReward + 1; // Example: -0.3 => 0.7 (less desireable feature)      0 => 1 (neutral)        0.9 => 1.9 (more desireable feature)
 
-                //Adjust the value of the query
-                Queries[theQuery] = featureMultiplier * discountFactor * nextStateLabelExpectedReward;
-            }
+            //Adjust the value of the query
+            Queries[theQuery] = featureMultiplier * discountFactor * nextStateLabelExpectedReward;
         }
 
         /// <summary>
@@ -309,21 +315,18 @@ namespace RLDT
             if (Queries.Count == 0)
                 return null;
 
-            lock (queriesLock)
-            {
-                //Build list of possible queries, that match datavector
-                var possibleQueries = Queries.Where(q =>
-                    dataVector.Features.Find(f => q.Key.Feature.Equals(f))
-                    != null
-                ).ToList();
+            //Build list of possible queries, that match datavector
+            var possibleQueries = Queries.Where(q =>
+                dataVector.Features.Find(f => q.Key.Feature.Equals(f))
+                != null
+            ).ToList();
 
-                //If no possibilities
-                if (possibleQueries.Count == 0)
-                    return null;
+            //If no possibilities
+            if (possibleQueries.Count == 0)
+                return null;
 
-                //Pick random query from possibilities
-                return possibleQueries[rand.Next(possibleQueries.Count)].Key;
-            }
+            //Pick random query from possibilities
+            return possibleQueries[rand.Next(possibleQueries.Count)].Key;
         }
 
         /// <summary>
@@ -336,26 +339,23 @@ namespace RLDT
             if (Queries == null) return new List<KeyValuePair<Query, double>>();
             if (Queries.Count == 0) return new List<KeyValuePair<Query, double>>();
 
-            lock(queriesLock)
+            //Find all feature groups
+            List<string> queryFeatureNames = Queries.Select(p => p.Key.Feature.Name).Distinct().ToList();
+
+            //Get average reward for each feature
+            Dictionary<string, double> featuresExpectedReward = new Dictionary<string, double>();
+            foreach(string theFeatureName in queryFeatureNames)
             {
-                //Find all feature groups
-                List<string> queryFeatureNames = Queries.ToList().Select(p => p.Key.Feature.Name).Distinct().ToList();
-
-                //Get average reward for each feature
-                Dictionary<string, double> featuresExpectedReward = new Dictionary<string, double>();
-                foreach(string theFeatureName in queryFeatureNames)
-                {
-                    double avgExpectedReward = Queries.ToList().FindAll(p => p.Key.Feature.Name == theFeatureName).Average(q => q.Value);
-                    featuresExpectedReward.Add(theFeatureName, avgExpectedReward);
-                }
-
-                //Find best query
-                string bestFeature = featuresExpectedReward.OrderByDescending(p => p.Value).First().Key;
-
-                //Find queries with same feature name
-                List<KeyValuePair<Query, double>> queryGroup = Queries.ToList().FindAll(q => q.Key.Feature.Name == bestFeature).ToList();
-                return queryGroup;
+                double avgExpectedReward = Queries.ToList().FindAll(p => p.Key.Feature.Name == theFeatureName).Average(q => q.Value);
+                featuresExpectedReward.Add(theFeatureName, avgExpectedReward);
             }
+
+            //Find best query
+            string bestFeature = featuresExpectedReward.OrderByDescending(p => p.Value).First().Key;
+
+            //Find queries with same feature name
+            List<KeyValuePair<Query, double>> queryGroup = Queries.ToList().FindAll(q => q.Key.Feature.Name == bestFeature).ToList();
+            return queryGroup;
         }
 
         /// <summary>
@@ -367,34 +367,23 @@ namespace RLDT
         /// <param name="dataVector"></param>
         public void AddMissingQueriesAndLabels(DataVectorTraining dataVector)
         {
-            lock(featuresLock)
+            //Try to create new queries
+            foreach (FeatureValuePairWithImportance theFeature in dataVector.Features.ToList())
             {
-                lock(queriesLock)
-                {
-                    //Try to create new queries
-                    foreach (FeatureValuePairWithImportance theFeature in dataVector.Features)
-                    {
-                        //Skip features names that are already in feature list.
-                        if (FeatureNames.Contains(theFeature.Name))
-                            continue;
+                //Skip features names that are already in feature list.
+                if (FeatureNames.Contains(theFeature.Name))
+                    continue;
 
-                        //Create the possibly new query
-                        Query newQuery = new Query(theFeature, dataVector.Label);
-                        newQuery.OnRemoveSelf += Query_OnRemoveSelf;
+                //Create the possibly new query
+                Query newQuery = new Query(theFeature, dataVector.Label);
 
-                        //Try to add the query
-                        if (!Queries.ContainsKey(newQuery))
-                            Queries.Add(newQuery, 1);
-                    }
-
-                }
+                //Try to add the query
+                if (!Queries.ContainsKey(newQuery))
+                    Queries.Add(newQuery, 1);
             }
-
-            lock(labelsLock)
-            {
-                //Try to add the label
-                AdjustLabels(dataVector.Label);
-            }
+            
+            //Try to add the label
+            AdjustLabels(dataVector.Label);
         }
 
         /// <summary>
@@ -404,12 +393,9 @@ namespace RLDT
         /// <returns></returns>
         public int GetHashCodeWith(FeatureValuePair withFeature)
         {
-            lock(featuresLock)
-            { 
-                var newFeatureHashSet = new HashSet<FeatureValuePair>(Features);
-                newFeatureHashSet.Add(withFeature);
-                return GenerateId(newFeatureHashSet).GetHashCode();
-            }
+            var newFeatureHashSet = new HashSet<FeatureValuePair>(Features);
+            newFeatureHashSet.Add(withFeature);
+            return GenerateId(newFeatureHashSet).GetHashCode();
         }
 
         /// <summary>
@@ -419,49 +405,56 @@ namespace RLDT
         /// <returns></returns>
         public int GetHashCodeWithout(FeatureValuePair WithoutFeature)
         {
-            lock(featuresLock)
-            {
-                //Copy list of features
-                var newFeatureHashSet = new HashSet<FeatureValuePair>(Features);
+            //Copy list of features
+            var newFeatureHashSet = new HashSet<FeatureValuePair>(Features);
 
-                //Remove specified feature
-                newFeatureHashSet.Remove(WithoutFeature);
+            //Remove specified feature
+            newFeatureHashSet.Remove(WithoutFeature);
 
-                //Return zero if no features
-                if (newFeatureHashSet.Count == 0) return 0;
-                return GenerateId(newFeatureHashSet).GetHashCode();
-            }
+            //Return zero if no features
+            if (newFeatureHashSet.Count == 0) return 0;
+            return GenerateId(newFeatureHashSet).GetHashCode();
         }
 
-        //Events
-        private void FeatureValuePair_OnRequestRemoved(object sender, EventArgs e)
-        {
-            FeatureValuePair fvp = (FeatureValuePair)sender;
-            //Remove the feature from the list of features.
-            this.Features.Remove(fvp);
 
-            //This state is no longer valid, so alert parents to remove it.
-            RemoveSelf();
-            Dispose();
+        public void RemoveQuery(Query query)
+        {
+            this.Queries.Remove(query);
+        }
+        public void RemoveLabel(FeatureValuePair label)
+        {
+            this.Labels.Remove(label);
+            this.LabelsCount.Remove(label);
+        }
+
+
+        //Events
+        private void Feature_OnRemoveSelf(object sender, EventArgs e)
+        {
+            OnRemoveState?.Invoke(this, new PolicyChangeEventArgs()
+            {
+                State = this
+            });
         }
         private void Query_OnRemoveSelf(object sender, EventArgs e)
         {
-            Query theQuery = (Query)sender;
-
-            //Remove the query from the list of queries
-            this.Queries.Remove(theQuery);
+            OnRemoveQuery?.Invoke(this, new PolicyChangeEventArgs()
+            {
+                State = this,
+                Query = (Query)sender
+            });
         }
         private void Label_OnRemoveSelf(object sender, EventArgs e)
         {
-            FeatureValuePair theLabel = (FeatureValuePair)sender;
-            //Remove the specified label from the list of labels.
-            this.Labels.Remove(theLabel);
+            OnRemoveLabel?.Invoke(this, new PolicyChangeEventArgs()
+            {
+                State = this,
+                Label = (FeatureValuePair)sender
+            });
         }
-        public void RemoveSelf()
-        {
-            OnRemoveSelf?.Invoke(this, new EventArgs());
-        }
-        public event EventHandler OnRemoveSelf;
+        public event EventHandler<PolicyChangeEventArgs> OnRemoveState;
+        public event EventHandler<PolicyChangeEventArgs> OnRemoveQuery;
+        public event EventHandler<PolicyChangeEventArgs> OnRemoveLabel;
 
         //Overrides
         /// <summary>
@@ -491,55 +484,16 @@ namespace RLDT
 
             return GenerateId(Features).GetHashCode();
         }
-        
+
         /// <summary>
         /// The list of features is converted into a delimited text string. The features are
         /// ordered alphabetically by name to ensure the same Id.
         /// </summary>
         /// <param name="features"></param>
         /// <returns></returns>
-        private string GenerateId(HashSet<FeatureValuePair> features)
+        public static string GenerateId(HashSet<FeatureValuePair> features)
         {
-            lock(featuresLock)
-            { 
-                return string.Join(";", features.OrderBy(p => p.Name).Select(p => (p.Name + ":" + p.Value)));
-            }
+            return string.Join(";", features.OrderBy(p => p.Name).Select(p => (p.Name + ":" + p.Value.GetHashCode())));
         }
-
-        #region IDisposable Support
-        public bool IsDisposed { get { return disposedValue; } }
-        private bool disposedValue = false; // To detect redundant calls
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects).
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
-                disposedValue = true;
-            }
-        }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~DataVector() {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
-        }
-        #endregion
     }
 }

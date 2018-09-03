@@ -340,7 +340,7 @@ namespace RLDT
             if (Queries.Count == 0) return new List<KeyValuePair<Query, double>>();
 
             //Find all feature groups
-            List<string> queryFeatureNames = Queries.Select(p => p.Key.Feature.Name).Distinct().ToList();
+            List<string> queryFeatureNames = Queries.ToList().Select(p => p.Key.Feature.Name).Distinct().ToList();
 
             //Get average reward for each feature
             Dictionary<string, double> featuresExpectedReward = new Dictionary<string, double>();

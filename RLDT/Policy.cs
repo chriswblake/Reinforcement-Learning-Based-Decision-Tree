@@ -158,39 +158,37 @@ namespace RLDT
             private set { _DecisionTree = value; }
         }
 
-
-        public HashSet<State> removedStates = new HashSet<State>();
-        public HashSet<Query> removedQueries = new HashSet<Query>();
-        public HashSet<FeatureValuePair> removedLabels = new HashSet<FeatureValuePair>();
-
-
-
-        //Events
-        
-
-        private void State_OnRemoveState(object sender, PolicyChangeEventArgs e)
+        public void RemoveStatesWithFeature(FeatureValuePair theFeature)
         {
-            lock (processLock)
+            lock(processLock)
             {
-                this.StateSpace.Remove(e.State.GetHashCode());
-                removedStates.Add(e.State);
-            }
-                
-        }
-        private void State_OnRemoveQuery(object sender, PolicyChangeEventArgs e)
-        {
-            lock (processLock)
-            {
-                e.State.RemoveQuery(e.Query);
-                removedQueries.Add(e.Query);
+                foreach (State theState in this.StateSpace.Values.ToList())
+                {
+                    if (theState.Features.Contains(theFeature))
+                        this.StateSpace.Remove(theState.GetHashCode());
+                }
             }
         }
-        private void State_OnRemoveLabel(object sender, PolicyChangeEventArgs e)
+        public void RemoveQueriesWithFeature(FeatureValuePair theFeature)
         {
             lock (processLock)
             {
-                e.State.RemoveLabel(e.Label);
-                removedLabels.Add(e.Label);
+                foreach (State theState in this.StateSpace.Values.ToList())
+                {
+                    foreach(Query theQuery in theState.Queries.Keys.ToList())
+                    {
+                        if (theQuery.Feature.Equals(theFeature))
+                            theState.Queries.Remove(theQuery);
+                    }
+                }
+            }
+        }
+        public void RemoveLabel(FeatureValuePair label)
+        {
+            lock(processLock)
+            { 
+                foreach(State state in this.StateSpace.Values)
+                    state.RemoveLabel(label);
             }
         }
 
@@ -204,10 +202,6 @@ namespace RLDT
         {
             lock (processLock)
             {
-                theState.OnRemoveState += State_OnRemoveState;
-                theState.OnRemoveQuery += State_OnRemoveQuery;
-                theState.OnRemoveLabel += State_OnRemoveLabel;
-
                 StateSpace.Add(theState.GetHashCode(), theState); trainingDetails.StatesCreated++;
             }
         }

@@ -72,6 +72,10 @@ namespace RLDT.DecisionTree
         /// <returns></returns>
         public object Classify(DataVector dataVector)
         {
+            return Classify(dataVector, true); //uses by probability
+        }
+        public object Classify(DataVector dataVector, bool byProbability)
+        {
             TreeNode DecisionTree = this;
 
             //Get root node of decision tree, and set current best labels
@@ -120,9 +124,11 @@ namespace RLDT.DecisionTree
                 }
 
             //Get best label from labels list
-            object bestLabelValue = PickLabelByProbability(labels);
+            if (byProbability)
+                return PickLabelByProbability(labels);
+            else
+                return PickLabelByHighestReward(labels);
 
-            return bestLabelValue;
         }
 
         /// <summary>
@@ -148,6 +154,17 @@ namespace RLDT.DecisionTree
             }
 
             return bestLabelValue;
+        }
+
+        /// <summary>
+        /// Upon reaching a leaf, a set of possible classification labels is used to return the
+        /// best expected label. The label with the highest expected (probability) reward is returned.
+        /// </summary>
+        /// <param name="labels">A list of the possible classification labels and their percentage probability.</param>
+        /// <returns></returns>
+        private object PickLabelByHighestReward(List<TreeLeaf> labels)
+        {
+            return labels.Max(p => p.ExpectedReward);
         }
 
 
@@ -183,12 +200,18 @@ namespace RLDT.DecisionTree
         /// <returns></returns>
         public string ToHtmlTree(TreeDisplaySettings treeDisplaySettings)
         {
+            return ToHtmlTree(treeDisplaySettings, null);
+        }
+        public string ToHtmlTree(TreeDisplaySettings treeDisplaySettings, string title)
+        {
             string html = "";
             if (treeDisplaySettings.IncludeDefaultTreeStyling)
                 html += DefaultStyling;
 
             //Get tree at this node
             html += "<div class='DecisionTree'>\n";
+            if (title!=null)
+                html += "<div class='title'>"+title+"</div>\n";
             html += ToHtmlTree(this, treeDisplaySettings);
             html += "</div>\n";
             return html;
@@ -210,21 +233,21 @@ namespace RLDT.DecisionTree
             //Node title
             nodeHtml += "<table>";
             if (groupNode.Type == TreeNodeType.Feature)
-                nodeHtml += "<tr><td class='Feature' colspan=100>" + groupNode.Name + "</td></tr>";
+                nodeHtml += "<tr><td class='Feature' colspan=100>" + groupNode.Name + "</td></tr>\n";
             else if(groupNode.Type == TreeNodeType.Root)
-                nodeHtml += "<tr><td class='Value' colspan=100>" + groupNode.Name + "</td></tr>";
+                nodeHtml += "<tr><td class='Value' colspan=100>" + groupNode.Name + "</td></tr>\n";
             else
-                nodeHtml += "<tr><td class='Value' colspan=100>" + GetPropValue(groupNode.Name, treeDisplaySettings.ValueDisplayProperty) + "</td></tr>";
-            nodeHtml += "<tr>";
+                nodeHtml += "<tr><td class='Value' colspan=100>" + GetPropValue(groupNode.Name, treeDisplaySettings.ValueDisplayProperty) + "</td></tr>\n";
 
+            nodeHtml += "<tr>\n";
             //Show subnodes
             if (groupNode.SubNodes.Count > 0)
             {
                 foreach (var subnode in groupNode.SubNodes)
                 {
-                    nodeHtml += "<td>";
-                    nodeHtml += ToHtmlTree(subnode, treeDisplaySettings);
-                    nodeHtml += "</td>";
+                    nodeHtml += "<td>\n";
+                    nodeHtml += ToHtmlTree(subnode, treeDisplaySettings) +"\n";
+                    nodeHtml += "</td>\n";
                 }
             }
 
@@ -232,7 +255,7 @@ namespace RLDT.DecisionTree
             int leafCount = groupNode.Leaves.Count;
             if (leafCount > 0)
             {
-                nodeHtml += "<td class='Leaf'>";
+                nodeHtml += "<td class='Leaf'>\n";
                 nodeHtml += "<div class='Leaf'>\n";
 
                 foreach (var leafItem in groupNode.Leaves)
@@ -240,19 +263,17 @@ namespace RLDT.DecisionTree
                     //Label
                     //nodeHtml += leafItem.LabelValue;
                     string displayProperty = treeDisplaySettings.LabelDisplayProperty;
-                    nodeHtml += GetPropValue(leafItem.LabelValue, displayProperty).ToString();
+                    nodeHtml += GetPropValue(leafItem.LabelValue, displayProperty).ToString() +"\n";
 
                     //Label %
                     if (leafCount > 1)
                         nodeHtml += ": " + leafItem.ExpectedReward.ToString("N3") + "</br>\n";
                 }
                 nodeHtml += "</div>\n";
-                nodeHtml += "</td>";
-
+                nodeHtml += "</td>\n";
             }
-            nodeHtml += "</tr>";
+            nodeHtml += "</tr>\n";
             nodeHtml += "</table>";
-
 
             return nodeHtml;
         }
@@ -280,11 +301,22 @@ namespace RLDT.DecisionTree
             {
                 return @"
     <style>
+    div.DecisionTree {
+        border: 1px solid #AAAAAA;
+    }
+
+    div.DecisionTree div.title {
+	    border: 0px solid #AAAAAA;
+	    background-color: #CCCCCC;
+	    text-align: center;
+	    font-weight: bold;
+    }
+
     div.DecisionTree table {
         border-collapse: collapse;
         padding: 0px;
         margin: 0px;
-        font: 8pt, arial, sans-serif;
+        font: 8pt arial, sans-serif;
         border: 0px solid #EEEEEE;
     }
 
@@ -299,10 +331,11 @@ namespace RLDT.DecisionTree
     }
 
     div.DecisionTree table td div.Leaf {
-        border: 1px solid #333333;
+        border: 1px solid #888888;
         background-color: #CCCCCC;
-        padding: 3px 10px 3px 10px;
+        padding: 1px 3px 1px 3px;
         white-space: nowrap;
+        font: 6pt arial, sans-serif;
     }
 
     </style>

@@ -382,6 +382,10 @@ namespace RLDT
         {
             return DecisionTree.Classify(dataVector);
         }
+        public object Classify_ByTree(DataVector dataVector, bool byProbability)
+        {
+            return DecisionTree.Classify(dataVector, byProbability);
+        }
 
         /// <summary>
         /// Uses the current policy to classify a datavector and return the best classification label.
@@ -389,6 +393,10 @@ namespace RLDT
         /// <param name="dataVector"></param>
         /// <returns>Classification label</returns>
         public object Classify_ByPolicy(DataVector dataVector)
+        {
+            return Classify_ByPolicy(dataVector, true);
+        }
+        public object Classify_ByPolicy(DataVector dataVector, bool byProbability)
         {
             //Start with root state
             State rootState = StateSpace[0]; // 0 is the hashcode for a state with no features.
@@ -420,22 +428,28 @@ namespace RLDT
 
             }
 
-            //Select best label, by percentage probabilty
-            double r = rand.NextDouble() * labels.Sum(p => p.Value); // Random value between 0 and the sum of expected rewards
-            double runningTotal = 0;
-            object bestLabelValue = null;
-            foreach (var label in labels.OrderBy(p => p.Value))
-            {
-                runningTotal += label.Value;
-                if (r < runningTotal)
+            //Select method for using the labels
+            if(byProbability)
+            { 
+                //Select best label, by percentage probabilty
+                double r = rand.NextDouble() * labels.Sum(p => p.Value); // Random value between 0 and the sum of expected rewards
+                double runningTotal = 0;
+                object bestLabelValue = null;
+                foreach (var label in labels.OrderBy(p => p.Value))
                 {
-                    bestLabelValue = label.Key.Value;
-                    break;
+                    runningTotal += label.Value;
+                    if (r < runningTotal)
+                    {
+                        bestLabelValue = label.Key.Value;
+                        break;
+                    }
                 }
+                return bestLabelValue;
+            }else
+            {
+                //By highest expected reward
+                return labels.OrderByDescending(p => p.Value).First().Key.Value;
             }
-
-            //Return value of appropriate label
-            return bestLabelValue;
         }
 
         /// <summary>

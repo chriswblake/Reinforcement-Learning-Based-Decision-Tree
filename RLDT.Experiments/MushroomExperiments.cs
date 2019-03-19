@@ -8,8 +8,6 @@ using RLDT;
 
 namespace RLDT.Experiments
 {
-
-
     public class MushroomsExperiments : Experiment
     {
         [Theory]
@@ -26,7 +24,8 @@ namespace RLDT.Experiments
         public void RandomData()
         {
             //Open training data stream
-            CsvStreamReader trainingData = new CsvStreamReader(DataSets("random.csv"));
+            string csvPath = DataSets("random.csv");
+            CsvStreamReader trainingData = new CsvStreamReader(csvPath);
             string labelName = "class";
 
             //Policy parameters
@@ -53,18 +52,40 @@ namespace RLDT.Experiments
             }
 
             //Testing
+            int testedCount = 0;
             int correctCount = 0;
             DataVectorTraining instance;
             while ((instance = trainingData.ReadLine(labelName)) != null)
             {
+                //Get values to compare
                 object prediction = thePolicy.DecisionTree.Classify(instance);
                 object correctAnswer = instance.Label.Value;
+
+                //Check answer
+                testedCount++;
                 if (prediction.Equals(correctAnswer))
                     correctCount++;
             }
 
             //Close the data stream
             trainingData.Close();
+
+            //Create metadata file
+            List<string> parameters = new List<string>();
+            parameters.Add("Training File: " + Path.GetFileName(csvPath));
+            parameters.Add("Training File Path: " + csvPath);
+            parameters.Add("Exploration Rate: " + thePolicy.ExplorationRate.ToString("N2"));
+            parameters.Add("Discount Factor: " + thePolicy.DiscountFactor);
+            parameters.Add("Parallel Query Updates: " + thePolicy.ParallelQueryUpdatesEnabled);
+            parameters.Add("Parallel Report Updates: " + thePolicy.ParallelReportUpdatesEnabled);
+            parameters.Add("Passes: " + passes);
+            parameters.Add("");
+            //parameters.Add("Testing File: " + Path.GetFileName(testingFileAddress));
+            //parameters.Add("Testing File Path: " + testingFileAddress);
+            parameters.Add("Correct Count: " + correctCount);
+            parameters.Add("Instances: " + testedCount);
+            parameters.Add("Percent Correct: " + (100.0 * correctCount / testedCount).ToString("N2"));
+            File.WriteAllLines(Path.Combine(ResultsDir, "details.txt"), parameters);
         }
     }
 }

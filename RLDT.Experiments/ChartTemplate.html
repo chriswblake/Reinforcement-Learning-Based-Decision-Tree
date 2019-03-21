@@ -1,0 +1,219 @@
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
+  </head>
+
+  <body style="padding-left:5px; padding-right:15px">
+    <canvas id="scatter-chart"></canvas>
+  </body>
+
+  <script>
+    //Support code
+    var colorTemplates = {
+      grayscale7:
+      [
+        "#DCDCDC",
+        "#C0C0C0",
+        "#A8A8A8",
+        "#808080",
+        "#606060",
+        "#383838",
+        "#101010",
+      ],
+      beach8:
+      [
+        "#588c7e",
+        "#f2e394",
+        "#f2ae72",
+        "#d96459",
+        "#96ceb4",
+        "#ffeead",
+        "#ffcc5c",
+        "#ff6f69",
+      ],
+      grayscale7:
+      [
+        "#DCDCDC",
+        "#C0C0C0",
+        "#A8A8A8",
+        "#808080",
+        "#606060",
+        "#383838",
+        "#101010",
+      ],
+      microsoft4:
+      [
+        "#F65314",
+        "#7CBB00",
+        "#00A1F1",
+        "#FFBB00",
+      ],
+      google4:
+      [
+        "#4285F4",
+        "#FBBC05",
+        "#34A853",
+        "#EA4335",
+      ]
+    };
+    function load()
+    {
+      new Chart(document.getElementById("scatter-chart"), {
+        type: 'scatter',
+        data: series,
+        options:
+        {
+          title: {
+            display: true,
+            text: chartTitle
+          },
+
+          legend: {
+            display: true,
+            labels: {
+                usePointStyle: true
+            }
+          },
+
+          scales: {
+            yAxes: [{
+              scaleLabel: {
+                display: true,
+                labelString: yAxisTitle,
+              },
+              ticks: {
+                    //min: 0,
+                    //max: 100
+              }
+            }],
+
+            xAxes: [{
+              scaleLabel: {
+                display: true,
+                labelString: xAxisTitle,
+              },
+              ticks: {
+                    //min: 0,
+                    //max: 100
+              }
+            }]
+          }
+        }
+      });
+    }
+    window.onload = load;
+
+    //Chart Properties
+    var chartTitle = "<chart title>";
+    var xAxisTitle = "<x title>";
+    var yAxisTitle = "<y title>"
+    var pointSize = 2;
+    var colors = colorTemplates.google4;
+
+    //Data 
+    var dataExample1 = [
+      {x: 1, y: 1},
+      {
+        x: 2,
+        y: 14
+      },
+      {
+        x: 3,
+        y: 12
+      },
+      {
+        x: 4,
+        y: 10
+      },
+      {
+        x: 5,
+        y: 4
+      },
+      {
+        x: 6,
+        y: 5
+      },
+      {
+        x: 7,
+        y: 8
+      },
+      {
+        x: 8,
+        y: 12
+      }
+    ];
+    var dataExample2 = [
+      {
+        x: 1,
+        y: 8
+      },
+      {
+        x: 2,
+        y: 7
+      },
+      {
+        x: 3,
+        y: 19
+      },
+      {
+        x: 4,
+        y: 11
+      },
+      {
+        x: 5,
+        y: 8
+      },
+      {
+        x: 6,
+        y: 2
+      },
+      {
+        x: 7,
+        y: 6
+      },
+      {
+        x: 8,
+        y: 14
+      }
+    ];
+    var seriesExample = {
+        datasets: [
+          { 
+            label: "Red",
+            hidden: false,
+            pointRadius: pointSize,
+            pointBackgroundColor: colors[0],
+            pointBorderColor: colors[0],
+            backgroundColor: colors[0],
+            borderColor: colors[0],
+            borderWidth: pointSize/2,
+            showLine: true,
+            lineTension: 0.0,
+            fill: false,
+            data: dataExample1
+          },
+          
+          { 
+            label: "Green",
+            pointRadius: pointSize,
+            pointBackgroundColor: colors[1],
+            pointBorderColor: colors[1],
+            backgroundColor: colors[1],
+            borderColor: colors[1],
+            borderWidth: pointSize/2,
+            showLine: true,
+            lineTension: 0.0,
+            fill: false,
+            data: dataExample2
+          }
+        ]
+      };
+
+    var series =
+    {
+        datasets: []
+    };
+
+  </script>
+ 
+</html>

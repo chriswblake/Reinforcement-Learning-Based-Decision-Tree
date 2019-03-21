@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using Xunit;
-//using RLDT;
+using OxyPlot;
+using OxyPlot.Axes;
+using OxyPlot.Series;
 
 namespace RLDT.Experiments
 {
@@ -129,8 +131,8 @@ namespace RLDT.Experiments
             System.IO.File.WriteAllLines(Path.Combine(ResultsDir, "TrainingStats.csv"), statLines);
             #endregion
 
-            #region Save HTML chart
-            Chart htmlChart = new Chart("Count vs Processed", "Processed", "Count2");
+            #region Save chart to html and pdf
+            Chart theChart = new Chart("Count vs Processed", "Processed", "Count2");
 
             //Add data to chart
             int sampleRate = 20;
@@ -138,18 +140,16 @@ namespace RLDT.Experiments
             {
                 if (p.Id % sampleRate == 0)
                 { 
-                    htmlChart.Add("States", p.Id, p.StatesTotal);
-                    htmlChart.Add("States Created", p.Id, p.StatesCreated);
-                    htmlChart.Add("Queries", p.Id, p.QueriesTotal);
+                    theChart.Add("States", p.Id, p.StatesTotal);
+                    theChart.Add("States Created", p.Id, p.StatesCreated);
+                    theChart.Add("Queries", p.Id, p.QueriesTotal);
                     //htmlChart.Add("Correct", p.Id, p.CorrectClassifications);
                 }
             }
 
-            File.WriteAllText(Path.Combine(ResultsDir, "chart.html"), htmlChart.ToHtml());
+            theChart.ToHtml(Path.Combine(ResultsDir, "chart"));
+            theChart.ToPdf(Path.Combine(ResultsDir, "chart"));
             #endregion
-            trainingData.Close();
-            testingData.Close();
-            return;
 
             #region Save metadata file
             List<string> parameters = new List<string>();
@@ -194,6 +194,18 @@ namespace RLDT.Experiments
             //Close the data stream
             trainingData.Close();
             testingData.Close();
+        }
+
+        [Theory]
+        [InlineData(800, 400)]
+        public void ScatterLinePlot(int width, int height)
+        {
+            Chart theChart = new Chart("Count vs Processed", "Processed", "Count");
+            //theChart.xMin = 0;
+            //theChart.xMax = 100;
+            //theChart.yMin = -100;
+            //theChart.yMax = 1000;
+            theChart.ToPdf(Path.Combine(ResultsDir, "ScatterLinePlot.pdf"));
         }
     }
 }

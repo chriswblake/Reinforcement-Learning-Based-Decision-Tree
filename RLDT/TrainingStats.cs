@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace RLDT.DecisionTree
+namespace RLDT
 {
     public class TrainingStats
     {
@@ -30,8 +30,7 @@ namespace RLDT.DecisionTree
         /// The number of correct classifications, if testing sample points is enabled. This is not assigned during training.
         /// It must be set externally, usually after running the classification method on test points.
         /// </summary>
-        public int CorrectClassifications { get; set; }
-
+        //public int CorrectClassifications { get; set; }
 
         public override string ToString()
         {
@@ -40,7 +39,7 @@ namespace RLDT.DecisionTree
             s += "  Total=" + StatesTotal;
             s += "  Visited=" + QueriesTotal;
             s += "  Created=" + StatesCreated;
-            s += "  Correct=" + CorrectClassifications;
+            //s += "  Correct=" + CorrectClassifications;
 
             return s;
         }

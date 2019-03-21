@@ -128,7 +128,7 @@ namespace RLDT.Experiments
                 string line = p.Id + "," + p.Pass + "," + p.InstanceID + "," + p.StatesTotal + "," + p.StatesCreated + "," + p.QueriesTotal + "," + p.CorrectClassifications;
                 statLines.Add(line);
             }
-            System.IO.File.WriteAllLines(Path.Combine(ResultsDir, "TrainingStats.csv"), statLines);
+            File.WriteAllLines(Path.Combine(ResultsDir, "ExperimentStats.csv"), statLines);
             #endregion
 
             #region Save chart to html and pdf

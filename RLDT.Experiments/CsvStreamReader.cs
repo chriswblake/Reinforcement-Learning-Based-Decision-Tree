@@ -28,6 +28,10 @@ namespace RLDT.Experiments
         {
             get { return lineCounter; }
         }
+        public bool EndOfStream
+        {
+            get { return file.EndOfStream; }
+        }
 
         //Methods
         public DataVector ReadLine()

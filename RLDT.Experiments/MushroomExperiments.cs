@@ -18,7 +18,7 @@ namespace RLDT.Experiments
         bool defaultParallelQueryUpdatesEnabled = true;
         bool defaultParallelReportUpdatesEnabled = false;
         int defaultQueriesLimt = 1000;
-        int defaultTestingInterval = 500;
+        int defaultTestingInterval = 200;
 
         [Theory]
         [InlineData("original.csv")]
@@ -63,7 +63,7 @@ namespace RLDT.Experiments
             string testingCsvPath = DataSets("random.csv");
             CsvStreamReader testingData = new CsvStreamReader(testingCsvPath);
             string testingLabelName = "class";
-            int testingInterval = defaultTestingInterval;
+            int testingInterval = 20;
 
             //Policy parameters
             Policy thePolicy = new Policy();
@@ -74,65 +74,80 @@ namespace RLDT.Experiments
             thePolicy.QueriesLimit = defaultQueriesLimt;
             #endregion
 
-            #region Training
-            Stopwatch stopwatchTraining = new Stopwatch();
-            stopwatchTraining.Start();
+            #region Training/Testing
             List<ExperimentStats> trainingHistory = new List<ExperimentStats>();
-            int processedPoints = 0;
+            Stopwatch stopwatchProcessing = new Stopwatch(); stopwatchProcessing.Start();
             for (int passId = 1; passId <= passes; passId++)
             {
-                //Peform training
-                DataVectorTraining instanceTraining;
-                while ((instanceTraining = trainingData.ReadLine(trainingLabelName)) != null)
+                //Cycle through each instance in the training file
+                while (!trainingData.EndOfStream)
                 {
-                    ExperimentStats experimentStats = new ExperimentStats(thePolicy.Learn(instanceTraining));
-                    processedPoints++;
-                    experimentStats.Id = processedPoints;
+                    //Submit to Trainer
+                    Stopwatch stopwatchTraining = new Stopwatch();
+                    stopwatchTraining.Start();
+                    DataVectorTraining instanceTraining = trainingData.ReadLine(trainingLabelName);
+                    ExperimentStats experimentStats = new ExperimentStats(thePolicy.Learn(instanceTraining)); //processedPoints++;
+                    stopwatchTraining.Stop();
+
+                    //Record training stats
+                    experimentStats.Id = trainingHistory.Count;
                     experimentStats.Pass = passId;
                     experimentStats.InstanceID = trainingData.LineNumber;
+                    experimentStats.TrainingTime = stopwatchTraining.ElapsedMilliseconds;
+
+                    if (experimentStats.Id % testingInterval == 0)
+                    { 
+                        //Submit to Tester
+                        int testedCount = 0;
+                        int correctCount = 0;
+                        Stopwatch stopwatchTesting = new Stopwatch();
+                        stopwatchTesting.Start();
+                        while (!testingData.EndOfStream)
+                        {
+                            DataVectorTraining instanceTesting = testingData.ReadLine(testingLabelName);
+                            //Get values to compare
+                            object prediction = thePolicy.DecisionTree.Classify(instanceTesting);
+                            object correctAnswer = instanceTesting.Label.Value;
+
+                            //Check answer
+                            testedCount++;
+                            if (prediction.Equals(correctAnswer))
+                                correctCount++;
+                        }
+                        stopwatchTesting.Stop();
+                        testingData.SeekOriginBegin();
+
+                        //Record testing stats
+                        experimentStats.TestingTime = stopwatchTesting.ElapsedMilliseconds;
+                        experimentStats.TestingAccuracy = correctCount / (double)testedCount;
+                    }
+
+                    //Save stats
                     trainingHistory.Add(experimentStats);
                 }
 
-                //Reset the dataset
+                //Reset training dataset
                 trainingData.SeekOriginBegin();
             }
-            stopwatchTraining.Stop();
+            stopwatchProcessing.Stop();
             #endregion
 
-            #region Testing
-            Stopwatch stopwatchTesting = new Stopwatch();
-            stopwatchTesting.Start();
-            int testedCount = 0;
-            int correctCount = 0;
-            DataVectorTraining instance;
-            while ((instance = trainingData.ReadLine(trainingLabelName)) != null)
-            {
-                //Get values to compare
-                object prediction = thePolicy.DecisionTree.Classify(instance);
-                object correctAnswer = instance.Label.Value;
-
-                //Check answer
-                testedCount++;
-                if (prediction.Equals(correctAnswer))
-                    correctCount++;
-            }
-            stopwatchTesting.Stop();
-            #endregion
-
-            #region Save experiment stats
+            #region Save experiment stats to CSV file
             //Convert data to csv lines
             List<string> statLines = new List<string>();
-            statLines.Add("Id,Pass,InstanceId,StatesTotal,StatesCreated,QueriesTotal,CorrectClassifications");
-            foreach (ExperimentStats p in trainingHistory)
-            {
-                string line = p.Id + "," + p.Pass + "," + p.InstanceID + "," + p.StatesTotal + "," + p.StatesCreated + "," + p.QueriesTotal + "," + p.CorrectClassifications;
-                statLines.Add(line);
-            }
+            //Get fields
+            statLines.Add(String.Join(",", trainingHistory[0].GetType().GetProperties().Select(p => p.Name)));
+            //Get data
+            foreach (ExperimentStats tp in trainingHistory)
+                statLines.Add(String.Join(",", tp.GetType().GetProperties().Select(p => p.GetValue(tp, null)).ToList()));
+            //Save to file
             File.WriteAllLines(Path.Combine(ResultsDir, "ExperimentStats.csv"), statLines);
             #endregion
 
             #region Save chart to html and pdf
-            Chart theChart = new Chart("Count vs Processed", "Processed", "Count2");
+            Chart chartStates = new Chart("States vs Processed", "Processed", "States");
+            Chart chartCounts = new Chart("Counts vs Processed", "Processed", "Count");
+            Chart chartAccuracy = new Chart("Accuracy vs Processed", "Processed", "% Correct");
 
             //Add data to chart
             int sampleRate = 20;
@@ -140,15 +155,22 @@ namespace RLDT.Experiments
             {
                 if (p.Id % sampleRate == 0)
                 { 
-                    theChart.Add("States", p.Id, p.StatesTotal);
-                    theChart.Add("States Created", p.Id, p.StatesCreated);
-                    theChart.Add("Queries", p.Id, p.QueriesTotal);
-                    //htmlChart.Add("Correct", p.Id, p.CorrectClassifications);
+                    chartStates.Add("States", p.Id, p.StatesTotal);
+                    chartCounts.Add("States Created", p.Id, p.StatesCreated);
+                    chartCounts.Add("Queries", p.Id, p.QueriesTotal);
+                    chartAccuracy.Add("Accuracy", p.Id, p.TestingAccuracy);
                 }
             }
 
-            theChart.ToHtml(Path.Combine(ResultsDir, "chart"));
-            theChart.ToPdf(Path.Combine(ResultsDir, "chart"));
+            //Save charts
+            chartStates.ToHtml(Path.Combine(ResultsDir, "States"));
+            chartStates.ToPdf(Path.Combine(ResultsDir, "States"));
+
+            chartCounts.ToHtml(Path.Combine(ResultsDir, "Counts"));
+            chartCounts.ToPdf(Path.Combine(ResultsDir, "Counts"));
+
+            chartAccuracy.ToHtml(Path.Combine(ResultsDir, "Accuracy"));
+            chartAccuracy.ToPdf(Path.Combine(ResultsDir, "Accuracy"));
             #endregion
 
             #region Save metadata file
@@ -156,8 +178,9 @@ namespace RLDT.Experiments
             parameters.Add("# Training Configuration");
             parameters.Add("Training File: " + Path.GetFileName(trainingCsvPath));
             parameters.Add("Training File Path: " + trainingCsvPath);
-            //parameters.Add("Testing File: " + Path.GetFileName(testingFileAddress));
-            //parameters.Add("Testing File Path: " + testingFileAddress);
+            parameters.Add("Testing File: " + Path.GetFileName(testingCsvPath));
+            parameters.Add("Testing File Path: " + testingCsvPath);
+            parameters.Add("Total Processing Time (ms): " + stopwatchProcessing.ElapsedMilliseconds);
 
             parameters.Add("");
             parameters.Add("# Policy Configuration");
@@ -169,14 +192,14 @@ namespace RLDT.Experiments
             parameters.Add("");
             parameters.Add("# Training Results");
             parameters.Add("Passes: " + passes);
-            parameters.Add("Training Time (ms): " + stopwatchTraining.ElapsedMilliseconds);
+            //parameters.Add("Training Time (ms): " + stopwatchTraining.ElapsedMilliseconds);
 
             parameters.Add("");
             parameters.Add("# Testing Results");
-            parameters.Add("Instances Checked: " + testedCount);
-            parameters.Add("Correct Count: " + correctCount);
-            parameters.Add("Percent Correct: " + (100.0 * correctCount / testedCount).ToString("N2"));
-            parameters.Add("Testing Time (ms): " + stopwatchTesting.ElapsedMilliseconds);
+            //parameters.Add("Instances Checked: " + testedCount);
+            //parameters.Add("Correct Count: " + correctCount);
+            //parameters.Add("Percent Correct: " + (100.0 * correctCount / testedCount).ToString("N2"));
+            //parameters.Add("Testing Time (ms): " + stopwatchTesting.ElapsedMilliseconds);
 
             File.WriteAllLines(Path.Combine(ResultsDir, "details.txt"), parameters);
             #endregion
@@ -194,18 +217,6 @@ namespace RLDT.Experiments
             //Close the data stream
             trainingData.Close();
             testingData.Close();
-        }
-
-        [Theory]
-        [InlineData(800, 400)]
-        public void ScatterLinePlot(int width, int height)
-        {
-            Chart theChart = new Chart("Count vs Processed", "Processed", "Count");
-            //theChart.xMin = 0;
-            //theChart.xMax = 100;
-            //theChart.yMin = -100;
-            //theChart.yMax = 1000;
-            theChart.ToPdf(Path.Combine(ResultsDir, "ScatterLinePlot.pdf"));
         }
     }
 }

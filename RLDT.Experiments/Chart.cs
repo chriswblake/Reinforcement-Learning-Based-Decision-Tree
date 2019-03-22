@@ -151,8 +151,7 @@ namespace RLDT.Experiments
                 {
                     Title = seriesData.Key,
                     MarkerType = MarkerType.Circle,
-                    MarkerSize = 3,
-                    MarkerFill = OxyColor.FromArgb(255, 0, 255, 0)
+                    MarkerSize = 3
                 };
                 //Add data
                 foreach(var datapoint in seriesData.Value)

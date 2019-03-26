@@ -377,6 +377,8 @@ namespace RLDT.Experiments
             results.Columns.Add("Instance Id", typeof(int));
             results.Columns.Add("Processed Total", typeof(int));
             results.Columns.Add("States Total", typeof(int));
+            results.Columns.Add("States Created", typeof(int));
+            results.Columns.Add("Queries Total", typeof(int));
             results.Columns.Add("Testing Accuracy", typeof(double));
             results.Columns.Add("Training Time", typeof(long));
             results.Columns.Add("Testing Time", typeof(long));
@@ -435,6 +437,8 @@ namespace RLDT.Experiments
                         result["Instance Id"] = trainingData.LineNumber;
                         result["Processed Total"] = processedTotal;
                         result["States Total"] = trainingStats.StatesTotal;
+                        result["States Created"] = trainingStats.StatesCreated;
+                        result["Queries Total"] = trainingStats.QueriesTotal;
                         result["Training Time"] = stopwatchTraining.ElapsedMilliseconds;
 
                         //Perform testing
@@ -483,8 +487,9 @@ namespace RLDT.Experiments
             #region Save chart to html and pdf
             //Create charts
             Chart chartStates = new Chart("States vs Processed", "Processed", "States");
-            Chart chartStatesVsExpRate = new Chart("States vs Exploration Rate", "Exploration Rate", "States");
             Chart chartAccuracy = new Chart("Accuracy vs Processed", "Processed", "% Correct");
+            Chart chartStatesVsExpRate = new Chart("States vs Exploration Rate", "Exploration Rate", "States");
+            Chart chartQueriesVsExpRate = new Chart("Queries vs Exploration Rate", "Exploration Rate", "Queries");
 
             // Add data to chart
             foreach (double explorationRate in explorationRates)
@@ -497,17 +502,23 @@ namespace RLDT.Experiments
                         chartAccuracy.Add(explorationRate.ToString("N2"), (int)r["Processed Total"], (double)r["Testing Accuracy"]);
                 }
                 chartStatesVsExpRate.Add("", (double)data.Last()["Exploration Rate"], (int)data.Last()["States Total"]);
+                chartQueriesVsExpRate.Add("Max", (double)data.Last()["Exploration Rate"], (int)data.Max(p=> (int) p["Queries Total"]));
+                chartQueriesVsExpRate.Add("Avg", (double)data.Last()["Exploration Rate"], (int)data.Average(p=> (int) p["Queries Total"]));
             }
 
             // Save charts
             chartStates.ToHtml(Path.Combine(ResultsDir, "States " + suffix));
             chartStates.ToPdf(Path.Combine(ResultsDir, "States " + suffix));
 
-            chartStatesVsExpRate.ToHtml(Path.Combine(ResultsDir, "StatesVsAccuracy " + suffix));
-            chartStatesVsExpRate.ToPdf(Path.Combine(ResultsDir, "StatesVsAccuracy " + suffix));
-
             chartAccuracy.ToHtml(Path.Combine(ResultsDir, "Accuracy " + suffix));
             chartAccuracy.ToPdf(Path.Combine(ResultsDir, "Accuracy " + suffix));
+
+            chartStatesVsExpRate.ToHtml(Path.Combine(ResultsDir, "States Vs Exp Rate " + suffix));
+            chartStatesVsExpRate.ToPdf(Path.Combine(ResultsDir, "States Vs Exp Rate " + suffix));
+
+            chartQueriesVsExpRate.ToHtml(Path.Combine(ResultsDir, "Queries Vs Exp Rate " + suffix));
+            chartQueriesVsExpRate.ToPdf(Path.Combine(ResultsDir, "Quries Vs Exp Rate " + suffix));
+
             #endregion
 
             #region Save metadata file
@@ -535,6 +546,5 @@ namespace RLDT.Experiments
             trainingData.Close();
             testingData.Close();
         }
-
     }
 }

@@ -30,7 +30,7 @@ namespace GraphicalInterface
         }
         private void Form1_Load(object sender, EventArgs e)
         {
-            btnReset_Click(null, null);
+            BtnReset_Click(null, null);
 
             //Set columns for results data table
             results.Columns.Add("Id", typeof(int));
@@ -47,9 +47,9 @@ namespace GraphicalInterface
             chartValues.DataSource = results;
 
             //Load Defaults
-            setDefaultParameters_Testing();
-            setDefaultParameters_Training();
-            setDefaultParameters_Display();
+            SetDefaultParameters_Testing();
+            SetDefaultParameters_Training();
+            SetDefaultParameters_Display();
         }
 
         #region Training
@@ -69,49 +69,51 @@ namespace GraphicalInterface
         Stopwatch stopwatchTraining = new Stopwatch();
 
         //Controls - Text Boxes
-        private void txtBoxExplorationRate_TextChanged(object sender, EventArgs e)
+        private void TxtBoxExplorationRate_TextChanged(object sender, EventArgs e)
         {
             try { explorationRate = Convert.ToDouble(txtBoxExplorationRate.Text); } catch { }
         }
-        private void txtboxDiscountFactor_TextChanged(object sender, EventArgs e)
+        private void TxtboxDiscountFactor_TextChanged(object sender, EventArgs e)
         {
             try { discountFactor = Convert.ToDouble(txtboxDiscountFactor.Text); } catch { }
         }
-        private void txtboxNumTrainingPoints_TextChanged(object sender, EventArgs e)
+        private void TxtboxNumTrainingPoints_TextChanged(object sender, EventArgs e)
         {
             try { numTrainingPoints = Convert.ToInt32(txtboxNumTrainingPoints.Text); } catch { }
         }
-        private void txtboxPasses_TextChanged(object sender, EventArgs e)
+        private void TxtboxPasses_TextChanged(object sender, EventArgs e)
         {
             try { passes = Convert.ToInt32(txtboxPasses.Text); } catch { }
         }
-        private void txtboxClassFeature_TextChanged(object sender, EventArgs e)
+        private void TxtboxClassFeature_TextChanged(object sender, EventArgs e)
         {
             trainingClassFeatureName = txtboxClassFeature.Text;
             testingClassFeatureName = trainingClassFeatureName;
         }
-        private void txtboxQueriesLimit_TextChanged(object sender, EventArgs e)
+        private void TxtboxQueriesLimit_TextChanged(object sender, EventArgs e)
         {
             try { queriesLimit = Convert.ToInt32(txtboxQueriesLimit.Text); } catch { }
         }
 
         //Controls - Check boxes
-        private void chkboxParallelReportUpdates_CheckedChanged(object sender, EventArgs e)
+        private void ChkboxParallelReportUpdates_CheckedChanged(object sender, EventArgs e)
         {
             parallelReportUpdates = chkboxParallelReportUpdates.Checked;
         }
-        private void chkboxParallelQueryUpdates_CheckedChanged(object sender, EventArgs e)
+        private void ChkboxParallelQueryUpdates_CheckedChanged(object sender, EventArgs e)
         {
             parallelQueryUpdates = chkboxParallelQueriesUpdates.Checked;
         }
 
         //Controls - Buttons
-        private void btnOpenTrainingDataFile_Click(object sender, EventArgs e)
+        private void BtnOpenTrainingDataFile_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Title = "Select CSV file for training";
-            openFileDialog.Filter = "csv files (*.csv)|*.csv|All files (*.*)|*.*";
-            openFileDialog.RestoreDirectory = true;
+            OpenFileDialog openFileDialog = new OpenFileDialog() {
+                Title = "Select CSV file for training",
+                Filter = "csv files (*.csv)|*.csv|All files (*.*)|*.*",
+                RestoreDirectory = true,
+        };
+            
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
@@ -121,7 +123,7 @@ namespace GraphicalInterface
                 lblTrainingDataFile.Text = Path.GetFileName(trainingFileAddress);
             }
         }
-        private void btnTrain_Click(object sender, EventArgs e)
+        private void BtnTrain_Click(object sender, EventArgs e)
         {
             //Disable train button
             btnTrain.Enabled = false;
@@ -139,10 +141,10 @@ namespace GraphicalInterface
                 thePolicy.ParallelQueryUpdatesEnabled = parallelQueryUpdates;
                 thePolicy.ParallelReportUpdatesEnabled = parallelReportUpdates;
                 thePolicy.QueriesLimit = queriesLimit;
-                startStopwatchTraining_InThread();
+                StartStopwatchTraining_InThread();
                 for (int i = 1; i <= passes; i++)
                 {
-                    updateProgressPass(i);
+                    UpdateProgressPass(i);
                     TrainFromCSV(thePolicy, trainingClassFeatureName, trainingFileAddress, numTrainingPoints);
                 }
                 stopwatchTraining.Stop();
@@ -176,7 +178,7 @@ namespace GraphicalInterface
 
             }).Start();
         }
-        private void btnReset_Click(object sender, EventArgs e)
+        private void BtnReset_Click(object sender, EventArgs e)
         {
             //Clear existing data
             results.Clear();
@@ -205,7 +207,7 @@ namespace GraphicalInterface
 
 
         //Methods
-        public void setDefaultParameters_Training()
+        public void SetDefaultParameters_Training()
         {
             //Controls
             txtBoxExplorationRate.Text = explorationRate.ToString("N2");
@@ -297,7 +299,7 @@ namespace GraphicalInterface
                 }
 
                 //Update processing status
-                updateProgressTraining(lineCounter);
+                UpdateProgressTraining(lineCounter);
 
                 //If limit reached, end early
                 if (lineCounter == readLimit) break;
@@ -317,16 +319,16 @@ namespace GraphicalInterface
         int totalPointsRead = 0;
 
         //Controls - Settings
-        private void txtboxSampleNthPoint_TextChanged(object sender, EventArgs e)
+        private void TxtboxSampleNthPoint_TextChanged(object sender, EventArgs e)
         {
             try { sampleNthPoint = Convert.ToInt32(txtboxSampleNthPoint.Text); } catch { }
         }
-        private void txtboxNumTestPoints_TextChanged(object sender, EventArgs e)
+        private void TxtboxNumTestPoints_TextChanged(object sender, EventArgs e)
         {
             try { numTestPoints = Convert.ToInt32(txtboxNumTestPoints.Text); } catch { }
 
         }
-        private void chboxTestPolicy_CheckedChanged(object sender, EventArgs e)
+        private void ChboxTestPolicy_CheckedChanged(object sender, EventArgs e)
         {
             testPolicy = chboxTestPolicy.Checked;
             try
@@ -337,13 +339,14 @@ namespace GraphicalInterface
         }
 
         //Controls - Buttons
-        private void btnOpenTestingDataFile_Click(object sender, EventArgs e)
+        private void BtnOpenTestingDataFile_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Title = "Select CSV file for testing";
-            openFileDialog.Filter = "csv files (*.csv)|*.csv|All files (*.*)|*.*";
-            openFileDialog.RestoreDirectory = true;
-
+            OpenFileDialog openFileDialog = new OpenFileDialog() {
+                Title = "Select CSV file for testing",
+                Filter = "csv files (*.csv)|*.csv|All files (*.*)|*.*",
+                RestoreDirectory = true,
+            };
+            
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 //Save to settings
@@ -352,14 +355,14 @@ namespace GraphicalInterface
                 lblTestingDataFile.Text = Path.GetFileName(testingFileAddress);
             }
         }
-        private void btnTestPolicy_Click(object sender, EventArgs e)
+        private void BtnTestPolicy_Click(object sender, EventArgs e)
         {
             int correctCount = TestFromCSV(thePolicy, testingClassFeatureName, testingFileAddress, numTestPoints);
             MessageBox.Show(correctCount.ToString());
         }
 
         //Methods
-        public void setDefaultParameters_Testing()
+        public void SetDefaultParameters_Testing()
         {
             //Controls
             chboxTestPolicy.Checked = testPolicy;
@@ -434,21 +437,21 @@ namespace GraphicalInterface
         };
 
         //Controls
-        private void setDefaultParameters_Display()
+        private void SetDefaultParameters_Display()
         {
             chboxShowBlanks.Checked = treeSettings.ShowBlanks;
             chBoxShowSubScores.Checked = treeSettings.ShowSubScores;
         }
-        private void btnRedraw_Click(object sender, EventArgs e)
+        private void BtnRedraw_Click(object sender, EventArgs e)
         {
             DrawTree();
         }
-        private void chboxShowBlanks_CheckedChanged(object sender, EventArgs e)
+        private void ChboxShowBlanks_CheckedChanged(object sender, EventArgs e)
         {
             treeSettings.ShowBlanks = chboxShowBlanks.Checked;
             DrawTree();
         }
-        private void chBoxShowSubScores_CheckedChanged(object sender, EventArgs e)
+        private void ChBoxShowSubScores_CheckedChanged(object sender, EventArgs e)
         {
             treeSettings.ShowSubScores = chBoxShowSubScores.Checked;
             DrawTree();
@@ -474,19 +477,19 @@ namespace GraphicalInterface
         #endregion
 
         #region Status
-        public void updateProgressPass(int currentPass)
+        public void UpdateProgressPass(int currentPass)
         {
             //Thread safe
             if (lblCurrentPass.InvokeRequired)
             {
-                lblCurrentPass.Invoke(new Action<int>(updateProgressPass), currentPass);
+                lblCurrentPass.Invoke(new Action<int>(UpdateProgressPass), currentPass);
                 return;
             }
 
             //Update label
             lblCurrentPass.Text = currentPass.ToString();
         }
-        public void updateProgressTraining(int currentLine)
+        public void UpdateProgressTraining(int currentLine)
         {
             //Only show update every 10th line (relative)
             if (currentLine % (numTrainingPoints / 10) == 0)
@@ -494,7 +497,7 @@ namespace GraphicalInterface
                 //Thread safe
                 if (lblCurrentLine.InvokeRequired)
                 {
-                    lblCurrentLine.Invoke(new Action<int>(updateProgressTraining), currentLine);
+                    lblCurrentLine.Invoke(new Action<int>(UpdateProgressTraining), currentLine);
                     return;
                 }
 
@@ -502,19 +505,19 @@ namespace GraphicalInterface
                 lblCurrentLine.Text = currentLine.ToString();
             }
         }
-        public void updateTimer(string elapsedTime)
+        public void UpdateTimer(string elapsedTime)
         {
             //Thread safe
             if (lblTimer.InvokeRequired)
             {
-                lblTimer.Invoke(new Action<string>(updateTimer), elapsedTime);
+                lblTimer.Invoke(new Action<string>(UpdateTimer), elapsedTime);
                 return;
             }
 
             //Update label
             lblTimer.Text = elapsedTime;
         }
-        public void startStopwatchTraining_InThread()
+        public void StartStopwatchTraining_InThread()
         {
             //Start the stopwatch
             stopwatchTraining.Reset();
@@ -532,7 +535,7 @@ namespace GraphicalInterface
                     ts.Minutes, ts.Seconds, ts.Milliseconds);
 
                     //Update timer label
-                    updateTimer(elapsedTime);
+                    UpdateTimer(elapsedTime);
 
                     //Wait
                     Thread.Sleep(100);
@@ -546,7 +549,7 @@ namespace GraphicalInterface
         //Chart controls
         double currentPositionX = 0;
         double currentPositionY = 0;
-        private void chartValues_MouseMove(object sender, MouseEventArgs e)
+        private void ChartValues_MouseMove(object sender, MouseEventArgs e)
         {
             //if (e.Button == MouseButtons.Left)
             //{
@@ -573,21 +576,23 @@ namespace GraphicalInterface
             //    currentPositionY = e.Y;
             //}
         }
-        private void chartValues_DoubleClick(object sender, EventArgs e)
+        private void ChartValues_DoubleClick(object sender, EventArgs e)
         {
             //Toggle legend visibility
             //chartValues.Legends[0].Enabled = !chartValues.Legends[0].Enabled;
         }
 
-        private void btnSaveData_Click(object sender, EventArgs e)
+        private void BtnSaveData_Click(object sender, EventArgs e)
         {
             //Ask for save location
             string fileDir = "";
             string fileName = "";
-            SaveFileDialog saveFileDialog1 = new SaveFileDialog();
-            saveFileDialog1.Filter = "csv files (*.csv)|*.csv";
-            saveFileDialog1.FilterIndex = 1;
-            saveFileDialog1.RestoreDirectory = true;
+            SaveFileDialog saveFileDialog1 = new SaveFileDialog() {
+                Filter = "csv files (*.csv)|*.csv",
+                FilterIndex = 1,
+                RestoreDirectory = true,
+            };
+            
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 fileDir = Path.GetDirectoryName(saveFileDialog1.FileName);
@@ -599,8 +604,9 @@ namespace GraphicalInterface
             }
 
             //Convert data to csv lines
-            List<string> lines = new List<string>();
-            lines.Add("Id,StatesTotal,StatesCreated,QueriesTotal,CorrectClassifications");
+            List<string> lines = new List<string>() {
+                "Id,StatesTotal,StatesCreated,QueriesTotal,CorrectClassifications"
+            };
             foreach (DataRow r in results.Rows)
             {
                 string line = r["Id"] + "," + r["States Total"] + "," + r["States Created"] + "," + r["Queries Total"] + "," + r["Testing Accuracy"];
@@ -608,20 +614,21 @@ namespace GraphicalInterface
             }
 
             //Create metadata file for test
-            List<string> parameters = new List<string>();
-            parameters.Add("Training File: " + Path.GetFileName(trainingFileAddress));
-            parameters.Add("Exporation Rate: " + explorationRate);
-            parameters.Add("Discount Factor: " + discountFactor);
-            parameters.Add("Parallel Query Updates: " + parallelQueryUpdates);
-            parameters.Add("Parallel Report Updates: " + parallelReportUpdates);
-            parameters.Add("Total Passes: " + totalPasses);
+            List<string> parameters = new List<string>() {
+                "Training File: " + Path.GetFileName(trainingFileAddress),
+                "Exporation Rate: " + explorationRate,
+                "Discount Factor: " + discountFactor,
+                "Parallel Query Updates: " + parallelQueryUpdates,
+                "Parallel Report Updates: " + parallelReportUpdates,
+                "Total Passes: " + totalPasses,
 
-            parameters.Add("");
+                "",
 
-            parameters.Add("Testing File: " + Path.GetFileName(testingFileAddress));
-            parameters.Add("Correct Count: " + correctCount);
-            parameters.Add("Points Checked: " + totalPointsRead);
-            parameters.Add("Percent Correct: " + (100.0 * correctCount / totalPointsRead).ToString("N2"));
+                "Testing File: " + Path.GetFileName(testingFileAddress),
+                "Correct Count: " + correctCount,
+                "Points Checked: " + totalPointsRead,
+                "Percent Correct: " + (100.0 * correctCount / totalPointsRead).ToString("N2")
+            };
 
             //Take picture of chart
             Control theControl = chartValues;
@@ -643,7 +650,7 @@ namespace GraphicalInterface
         
     }
 
-    public static class extentions
+    public static class Extentions
     {
         public static void InvokeAction(this Control ctl, Action a)
         {

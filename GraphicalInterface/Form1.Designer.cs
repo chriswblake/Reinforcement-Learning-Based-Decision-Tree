@@ -306,8 +306,8 @@
             this.chartValues.TabIndex = 0;
             this.chartValues.TabStop = false;
             this.chartValues.Text = "chartValues";
-            this.chartValues.DoubleClick += new System.EventHandler(this.chartValues_DoubleClick);
-            this.chartValues.MouseMove += new System.Windows.Forms.MouseEventHandler(this.chartValues_MouseMove);
+            this.chartValues.DoubleClick += new System.EventHandler(this.ChartValues_DoubleClick);
+            this.chartValues.MouseMove += new System.Windows.Forms.MouseEventHandler(this.ChartValues_MouseMove);
             // 
             // tlpMain
             // 
@@ -436,7 +436,7 @@
             this.txtboxQueriesLimit.Size = new System.Drawing.Size(112, 31);
             this.txtboxQueriesLimit.TabIndex = 107;
             this.txtboxQueriesLimit.Text = "1000";
-            this.txtboxQueriesLimit.TextChanged += new System.EventHandler(this.txtboxQueriesLimit_TextChanged);
+            this.txtboxQueriesLimit.TextChanged += new System.EventHandler(this.TxtboxQueriesLimit_TextChanged);
             // 
             // btnSaveData
             // 
@@ -448,7 +448,7 @@
             this.btnSaveData.TabIndex = 401;
             this.btnSaveData.Text = "Save Data to CSV";
             this.btnSaveData.UseVisualStyleBackColor = true;
-            this.btnSaveData.Click += new System.EventHandler(this.btnSaveData_Click);
+            this.btnSaveData.Click += new System.EventHandler(this.BtnSaveData_Click);
             // 
             // lblTotalPasses
             // 
@@ -474,7 +474,7 @@
             this.chkboxParallelReportUpdates.TabIndex = 106;
             this.chkboxParallelReportUpdates.Text = "Parallel Report Updates";
             this.chkboxParallelReportUpdates.UseVisualStyleBackColor = true;
-            this.chkboxParallelReportUpdates.CheckedChanged += new System.EventHandler(this.chkboxParallelReportUpdates_CheckedChanged);
+            this.chkboxParallelReportUpdates.CheckedChanged += new System.EventHandler(this.ChkboxParallelReportUpdates_CheckedChanged);
             // 
             // chkboxParallelQueriesUpdates
             // 
@@ -489,7 +489,7 @@
             this.chkboxParallelQueriesUpdates.TabIndex = 105;
             this.chkboxParallelQueriesUpdates.Text = "Parallel Query Updates";
             this.chkboxParallelQueriesUpdates.UseVisualStyleBackColor = true;
-            this.chkboxParallelQueriesUpdates.CheckedChanged += new System.EventHandler(this.chkboxParallelQueryUpdates_CheckedChanged);
+            this.chkboxParallelQueriesUpdates.CheckedChanged += new System.EventHandler(this.ChkboxParallelQueryUpdates_CheckedChanged);
             // 
             // lblTimer
             // 
@@ -511,7 +511,7 @@
             this.btnOpenTestingDataFile.TabIndex = 204;
             this.btnOpenTestingDataFile.Text = "File";
             this.btnOpenTestingDataFile.UseVisualStyleBackColor = true;
-            this.btnOpenTestingDataFile.Click += new System.EventHandler(this.btnOpenTestingDataFile_Click);
+            this.btnOpenTestingDataFile.Click += new System.EventHandler(this.BtnOpenTestingDataFile_Click);
             // 
             // lblTestingDataFile
             // 
@@ -545,7 +545,7 @@
             this.btnTestPolicy.TabIndex = 205;
             this.btnTestPolicy.Text = "Test Policy";
             this.btnTestPolicy.UseVisualStyleBackColor = true;
-            this.btnTestPolicy.Click += new System.EventHandler(this.btnTestPolicy_Click);
+            this.btnTestPolicy.Click += new System.EventHandler(this.BtnTestPolicy_Click);
             // 
             // chBoxShowSubScores
             // 
@@ -560,7 +560,7 @@
             this.chBoxShowSubScores.TabIndex = 302;
             this.chBoxShowSubScores.Text = "Show Subscores";
             this.chBoxShowSubScores.UseVisualStyleBackColor = true;
-            this.chBoxShowSubScores.CheckedChanged += new System.EventHandler(this.chBoxShowSubScores_CheckedChanged);
+            this.chBoxShowSubScores.CheckedChanged += new System.EventHandler(this.ChBoxShowSubScores_CheckedChanged);
             // 
             // txtBoxExplorationRate
             // 
@@ -570,7 +570,7 @@
             this.txtBoxExplorationRate.Size = new System.Drawing.Size(112, 31);
             this.txtBoxExplorationRate.TabIndex = 101;
             this.txtBoxExplorationRate.Text = "0.30";
-            this.txtBoxExplorationRate.TextChanged += new System.EventHandler(this.txtBoxExplorationRate_TextChanged);
+            this.txtBoxExplorationRate.TextChanged += new System.EventHandler(this.TxtBoxExplorationRate_TextChanged);
             // 
             // lblCurrentLine
             // 
@@ -600,7 +600,7 @@
             this.txtboxNumTrainingPoints.Size = new System.Drawing.Size(112, 31);
             this.txtboxNumTrainingPoints.TabIndex = 103;
             this.txtboxNumTrainingPoints.Text = "10000";
-            this.txtboxNumTrainingPoints.TextChanged += new System.EventHandler(this.txtboxNumTrainingPoints_TextChanged);
+            this.txtboxNumTrainingPoints.TextChanged += new System.EventHandler(this.TxtboxNumTrainingPoints_TextChanged);
             // 
             // txtboxNumTestPoints
             // 
@@ -610,7 +610,7 @@
             this.txtboxNumTestPoints.Size = new System.Drawing.Size(112, 31);
             this.txtboxNumTestPoints.TabIndex = 203;
             this.txtboxNumTestPoints.Text = "50";
-            this.txtboxNumTestPoints.TextChanged += new System.EventHandler(this.txtboxNumTestPoints_TextChanged);
+            this.txtboxNumTestPoints.TextChanged += new System.EventHandler(this.TxtboxNumTestPoints_TextChanged);
             // 
             // btnRedraw
             // 
@@ -623,7 +623,7 @@
             this.btnRedraw.TabIndex = 301;
             this.btnRedraw.Text = "Redraw Tree";
             this.btnRedraw.UseVisualStyleBackColor = true;
-            this.btnRedraw.Click += new System.EventHandler(this.btnRedraw_Click);
+            this.btnRedraw.Click += new System.EventHandler(this.BtnRedraw_Click);
             // 
             // txtboxPasses
             // 
@@ -633,7 +633,7 @@
             this.txtboxPasses.Size = new System.Drawing.Size(112, 31);
             this.txtboxPasses.TabIndex = 104;
             this.txtboxPasses.Text = "10";
-            this.txtboxPasses.TextChanged += new System.EventHandler(this.txtboxPasses_TextChanged);
+            this.txtboxPasses.TextChanged += new System.EventHandler(this.TxtboxPasses_TextChanged);
             // 
             // btnTrain
             // 
@@ -645,7 +645,7 @@
             this.btnTrain.TabIndex = 110;
             this.btnTrain.Text = "Train";
             this.btnTrain.UseVisualStyleBackColor = true;
-            this.btnTrain.Click += new System.EventHandler(this.btnTrain_Click);
+            this.btnTrain.Click += new System.EventHandler(this.BtnTrain_Click);
             // 
             // txtboxSampleNthPoint
             // 
@@ -668,7 +668,7 @@
             this.btnReset.TabIndex = 111;
             this.btnReset.Text = "Reset";
             this.btnReset.UseVisualStyleBackColor = true;
-            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
+            this.btnReset.Click += new System.EventHandler(this.BtnReset_Click);
             // 
             // txtboxDiscountFactor
             // 
@@ -678,7 +678,7 @@
             this.txtboxDiscountFactor.Size = new System.Drawing.Size(112, 31);
             this.txtboxDiscountFactor.TabIndex = 102;
             this.txtboxDiscountFactor.Text = "0.80";
-            this.txtboxDiscountFactor.TextChanged += new System.EventHandler(this.txtboxDiscountFactor_TextChanged);
+            this.txtboxDiscountFactor.TextChanged += new System.EventHandler(this.TxtboxDiscountFactor_TextChanged);
             // 
             // chboxTestPolicy
             // 
@@ -693,7 +693,7 @@
             this.chboxTestPolicy.TabIndex = 201;
             this.chboxTestPolicy.Text = "Test Each Sample";
             this.chboxTestPolicy.UseVisualStyleBackColor = true;
-            this.chboxTestPolicy.CheckedChanged += new System.EventHandler(this.chboxTestPolicy_CheckedChanged);
+            this.chboxTestPolicy.CheckedChanged += new System.EventHandler(this.ChboxTestPolicy_CheckedChanged);
             // 
             // chboxShowBlanks
             // 
@@ -708,7 +708,7 @@
             this.chboxShowBlanks.TabIndex = 303;
             this.chboxShowBlanks.Text = "Show Blanks";
             this.chboxShowBlanks.UseVisualStyleBackColor = true;
-            this.chboxShowBlanks.CheckedChanged += new System.EventHandler(this.chboxShowBlanks_CheckedChanged);
+            this.chboxShowBlanks.CheckedChanged += new System.EventHandler(this.ChboxShowBlanks_CheckedChanged);
             // 
             // btnOpenTrainingDataFile
             // 
@@ -720,7 +720,7 @@
             this.btnOpenTrainingDataFile.TabIndex = 108;
             this.btnOpenTrainingDataFile.Text = "File";
             this.btnOpenTrainingDataFile.UseVisualStyleBackColor = true;
-            this.btnOpenTrainingDataFile.Click += new System.EventHandler(this.btnOpenTrainingDataFile_Click);
+            this.btnOpenTrainingDataFile.Click += new System.EventHandler(this.BtnOpenTrainingDataFile_Click);
             // 
             // txtboxClassFeature
             // 
@@ -729,7 +729,7 @@
             this.txtboxClassFeature.Name = "txtboxClassFeature";
             this.txtboxClassFeature.Size = new System.Drawing.Size(112, 31);
             this.txtboxClassFeature.TabIndex = 109;
-            this.txtboxClassFeature.TextChanged += new System.EventHandler(this.txtboxClassFeature_TextChanged);
+            this.txtboxClassFeature.TextChanged += new System.EventHandler(this.TxtboxClassFeature_TextChanged);
             // 
             // Form1
             // 

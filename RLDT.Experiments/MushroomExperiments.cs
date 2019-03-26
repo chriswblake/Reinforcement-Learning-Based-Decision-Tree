@@ -14,12 +14,12 @@ namespace RLDT.Experiments
     public class MushroomsExperiments : Experiment
     {
         //Policy defaults
-        double defaultExplorationRate = 0.00;
-        double defaultDiscountFactor = 0.85;
-        bool defaultParallelQueryUpdatesEnabled = true;
-        bool defaultParallelReportUpdatesEnabled = false;
-        int defaultQueriesLimit = 1000;
-        int defaultTestingInterval = 500;
+        readonly double defaultExplorationRate = 0.00;
+        readonly double defaultDiscountFactor = 0.85;
+        readonly bool defaultParallelQueryUpdatesEnabled = true;
+        readonly bool defaultParallelReportUpdatesEnabled = false;
+        readonly int defaultQueriesLimit = 1000;
+        readonly int defaultTestingInterval = 500;
 
         [Theory]
         [InlineData("original.csv")]
@@ -65,12 +65,14 @@ namespace RLDT.Experiments
             #endregion
 
             #region Policy configuration
-            Policy thePolicy = new Policy();
-            thePolicy.ExplorationRate = defaultExplorationRate;
-            thePolicy.DiscountFactor = defaultDiscountFactor;
-            thePolicy.ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled;
-            thePolicy.ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled;
-            thePolicy.QueriesLimit = defaultQueriesLimit;
+            Policy thePolicy = new Policy() {
+                ExplorationRate = defaultExplorationRate,
+                DiscountFactor = defaultDiscountFactor,
+                ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
+                ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
+                QueriesLimit = defaultQueriesLimit,
+        };
+            
             #endregion
 
             #region Processing
@@ -236,12 +238,14 @@ namespace RLDT.Experiments
             foreach (double discountFactor in discountFactors)
             {
                 //Policy Configuration
-                thePolicy = new Policy();
-                thePolicy.ExplorationRate = defaultExplorationRate;
-                thePolicy.DiscountFactor = discountFactor;// defaultDiscountFactor;
-                thePolicy.ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled;
-                thePolicy.ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled;
-                thePolicy.QueriesLimit = defaultQueriesLimit;
+                thePolicy = new Policy() {
+                    ExplorationRate = defaultExplorationRate,
+                    DiscountFactor = discountFactor,// defaultDiscountFactor;
+                    ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
+                    ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
+                    QueriesLimit = defaultQueriesLimit,
+            };
+                
 
                 #region Training/Testing
                 int processedTotal = 0;
@@ -398,12 +402,14 @@ namespace RLDT.Experiments
             foreach (double explorationRate in explorationRates)
             {
                 //Policy Configuration
-                thePolicy = new Policy();
-                thePolicy.ExplorationRate = explorationRate; //defaultExplorationRate;
-                thePolicy.DiscountFactor = defaultDiscountFactor;
-                thePolicy.ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled;
-                thePolicy.ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled;
-                thePolicy.QueriesLimit = defaultQueriesLimit;
+                thePolicy = new Policy() {
+                    ExplorationRate = explorationRate, //defaultExplorationRate;
+                    DiscountFactor = defaultDiscountFactor,
+                    ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
+                    ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
+                    QueriesLimit = defaultQueriesLimit,
+            };
+                
 
                 #region Training/Testing
                 int processedTotal = 0;

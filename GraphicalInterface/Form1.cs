@@ -19,7 +19,9 @@ namespace GraphicalInterface
     public partial class Form1 : Form
     {
         //Fields
-        public List<TrainingStats> policyVsStep = new List<TrainingStats>(); private Object dataBindLock = new Object();
+        DataTable results = new DataTable();
+        //public List<TrainingStats> policyVsStep = new List<TrainingStats>();
+        private Object dataBindLock = new Object();
 
         //Constructors
         public Form1()
@@ -30,11 +32,19 @@ namespace GraphicalInterface
         {
             btnReset_Click(null, null);
 
+            //Set columns for results data table
+            results.Columns.Add("Id", typeof(int));
+            results.Columns.Add("Instance Id", typeof(int));
+            results.Columns.Add("States Total", typeof(int));
+            results.Columns.Add("States Created", typeof(int));
+            results.Columns.Add("Queries Total", typeof(int));
+            results.Columns.Add("Testing Accuracy", typeof(double));
+
             //Clear sample series for chart
             chartValues.Series.Clear();
 
             //Set datasource for chart
-            chartValues.DataSource = policyVsStep;
+            chartValues.DataSource = results;
 
             //Load Defaults
             setDefaultParameters_Testing();
@@ -169,7 +179,7 @@ namespace GraphicalInterface
         private void btnReset_Click(object sender, EventArgs e)
         {
             //Clear existing data
-            policyVsStep.Clear();
+            results.Clear();
             thePolicy = new Policy();
 
             //Clear charts and reset
@@ -245,8 +255,8 @@ namespace GraphicalInterface
 
             //Determine id for statistics
             int initialId = 0;
-            if (policyVsStep.Count != 0)
-                initialId = policyVsStep.ToList().Max(p => p.Id);
+            if (results.Rows.Count != 0)
+                initialId = results.Rows.Cast<DataRow>().Max(p => (int)p["Id"]);
 
             //Read data into feature vector
             string line; int lineCounter = 0;
@@ -263,19 +273,27 @@ namespace GraphicalInterface
 
                 //Submit to the reinforcement learner
                 TrainingStats trainingStats = thePolicy.Learn(dataVector);
-                trainingStats.Id = initialId + lineCounter;
-
+                DataRow dr = results.NewRow();
+                results.Rows.Add(dr);
+                dr["Id"] = initialId + lineCounter;
+                dr["Instance Id"] = lineCounter;
+                dr["States Total"] = trainingStats.StatesTotal;
+                dr["States Created"] = trainingStats.StatesCreated;
+                dr["Queries Total"] = trainingStats.QueriesTotal;
 
                 //Copy data for chart
                 if (lineCounter % sampleNthPoint == 0)
                 {
                     //Save policy snapshot
                     lock (dataBindLock)
-                        policyVsStep.Add(trainingStats);
+                        results.Rows.Add(dr);
 
-                    //Save count of correc classifications
+                    //Save testing accuracy
                     if (chboxTestPolicy.Checked)
-                        trainingStats.CorrectClassifications = TestFromCSV(thePolicy, testingClassFeatureName, testingFileAddress, numTestPoints);
+                    {
+                        int correctClassifications = TestFromCSV(thePolicy, testingClassFeatureName, testingFileAddress, numTestPoints);
+                        dr["Testing Accuracy"] = (double) correctClassifications / lineCounter;
+                    }
                 }
 
                 //Update processing status
@@ -583,9 +601,9 @@ namespace GraphicalInterface
             //Convert data to csv lines
             List<string> lines = new List<string>();
             lines.Add("Id,StatesTotal,StatesCreated,QueriesTotal,CorrectClassifications");
-            foreach(TrainingStats p in policyVsStep)
+            foreach (DataRow r in results.Rows)
             {
-                string line = p.Id + "," + p.StatesTotal + "," + p.StatesCreated + "," + p.QueriesTotal + "," + p.CorrectClassifications;
+                string line = r["Id"] + "," + r["States Total"] + "," + r["States Created"] + "," + r["Queries Total"] + "," + r["Testing Accuracy"];
                 lines.Add(line);
             }
 

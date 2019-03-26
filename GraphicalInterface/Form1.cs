@@ -20,7 +20,6 @@ namespace GraphicalInterface
     {
         //Fields
         DataTable results = new DataTable();
-        //public List<TrainingStats> policyVsStep = new List<TrainingStats>();
         private Object dataBindLock = new Object();
 
         //Constructors
@@ -223,7 +222,7 @@ namespace GraphicalInterface
             //StatesTotal
             Series seriesStatesTotal = chartValues.Series.Add("States Total");
             seriesStatesTotal.XValueMember = "Id";
-            seriesStatesTotal.YValueMembers = "StatesTotal";
+            seriesStatesTotal.YValueMembers = "States Total";
             seriesStatesTotal.ToolTip = "States Total: #VALY";
             seriesStatesTotal.ChartType = SeriesChartType.FastPoint;
             seriesStatesTotal.YAxisType = AxisType.Primary;
@@ -231,14 +230,14 @@ namespace GraphicalInterface
             ////StatesVisited
             //Series seriesStatesVisited = chartValues.Series.Add("Queries Total");
             //seriesStatesVisited.XValueMember = "Id";
-            //seriesStatesVisited.YValueMembers = "QueriesTotal";
+            //seriesStatesVisited.YValueMembers = "Queries Total";
             //seriesStatesVisited.ToolTip = "Queries Total: #VALY";
             //seriesStatesVisited.ChartType = SeriesChartType.FastPoint;
 
             ////StatesCreated
             //Series seriesStatesCreated = chartValues.Series.Add("States Created");
             //seriesStatesCreated.XValueMember = "Id";
-            //seriesStatesCreated.YValueMembers = "StatesCreated";
+            //seriesStatesCreated.YValueMembers = "States Created";
             //seriesStatesCreated.ToolTip = "States Created: #VALY";
             //seriesStatesCreated.ChartType = SeriesChartType.FastPoint;
         }
@@ -276,7 +275,6 @@ namespace GraphicalInterface
                 //Submit to the reinforcement learner
                 TrainingStats trainingStats = thePolicy.Learn(dataVector);
                 DataRow dr = results.NewRow();
-                results.Rows.Add(dr);
                 dr["Id"] = initialId + lineCounter;
                 dr["Instance Id"] = lineCounter;
                 dr["States Total"] = trainingStats.StatesTotal;
@@ -293,8 +291,8 @@ namespace GraphicalInterface
                     //Save testing accuracy
                     if (chboxTestPolicy.Checked)
                     {
-                        int correctClassifications = TestFromCSV(thePolicy, testingClassFeatureName, testingFileAddress, numTestPoints);
-                        dr["Testing Accuracy"] = (double) correctClassifications / lineCounter;
+                        int correctCount = TestFromCSV(thePolicy, testingClassFeatureName, testingFileAddress, numTestPoints);
+                        dr["Testing Accuracy"] = (double) correctCount / lineCounter;
                     }
                 }
 
@@ -333,7 +331,7 @@ namespace GraphicalInterface
             testPolicy = chboxTestPolicy.Checked;
             try
             {
-                chartValues.Series["CorrectClassifications"].Enabled = testPolicy;
+                chartValues.Series["Testing Accuracy"].Enabled = testPolicy;
             }
             catch { }
         }
@@ -373,13 +371,13 @@ namespace GraphicalInterface
             //Chart
             //Correct Classifications
             chartValues.ChartAreas[0].AxisY2.Enabled = AxisEnabled.Auto;
-            Series seriesCorrectClassifications = chartValues.Series.Add("Correct Classifications");
-            seriesCorrectClassifications.YAxisType = AxisType.Secondary;
-            seriesCorrectClassifications.XValueMember = "Id";
-            seriesCorrectClassifications.YValueMembers = "CorrectClassifications";
-            seriesCorrectClassifications.ToolTip = "Correct Classifications: #VALY";
-            seriesCorrectClassifications.Enabled = testPolicy;
-            seriesCorrectClassifications.ChartType = SeriesChartType.FastPoint;
+            Series seriesTestingAccuracy = chartValues.Series.Add("Testing Accuracy");
+            seriesTestingAccuracy.YAxisType = AxisType.Secondary;
+            seriesTestingAccuracy.XValueMember = "Id";
+            seriesTestingAccuracy.YValueMembers = "Testing Accuracy";
+            seriesTestingAccuracy.ToolTip = "Accuracy: #VALY";
+            seriesTestingAccuracy.Enabled = testPolicy;
+            seriesTestingAccuracy.ChartType = SeriesChartType.FastPoint;
         }
         public int TestFromCSV(Policy thePolicy, string labelFeaturName, string csvAddress)
         {
@@ -581,7 +579,6 @@ namespace GraphicalInterface
             //Toggle legend visibility
             //chartValues.Legends[0].Enabled = !chartValues.Legends[0].Enabled;
         }
-
         private void BtnSaveData_Click(object sender, EventArgs e)
         {
             //Ask for save location
@@ -605,7 +602,7 @@ namespace GraphicalInterface
 
             //Convert data to csv lines
             List<string> lines = new List<string>() {
-                "Id,StatesTotal,StatesCreated,QueriesTotal,CorrectClassifications"
+                "Id,StatesTotal,StatesCreated,QueriesTotal,TestingAccuracy"
             };
             foreach (DataRow r in results.Rows)
             {
@@ -646,8 +643,6 @@ namespace GraphicalInterface
             System.IO.File.WriteAllLines(Path.Combine(fileDir, fileName + ".csv"), lines);
             System.IO.File.WriteAllLines(Path.Combine(fileDir, fileName + "-details.txt"), parameters);
         }
-
-        
     }
 
     public static class Extentions

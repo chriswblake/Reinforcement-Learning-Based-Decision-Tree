@@ -103,9 +103,10 @@
             // 
             lblPasses.AutoSize = true;
             lblPasses.Dock = System.Windows.Forms.DockStyle.Fill;
-            lblPasses.Location = new System.Drawing.Point(3, 155);
+            lblPasses.Location = new System.Drawing.Point(2, 96);
+            lblPasses.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblPasses.Name = "lblPasses";
-            lblPasses.Size = new System.Drawing.Size(170, 37);
+            lblPasses.Size = new System.Drawing.Size(83, 24);
             lblPasses.TabIndex = 6;
             lblPasses.Text = "Passes";
             lblPasses.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -114,9 +115,10 @@
             // 
             lblSampling.AutoSize = true;
             lblSampling.Dock = System.Windows.Forms.DockStyle.Fill;
-            lblSampling.Location = new System.Drawing.Point(3, 608);
+            lblSampling.Location = new System.Drawing.Point(2, 363);
+            lblSampling.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblSampling.Name = "lblSampling";
-            lblSampling.Size = new System.Drawing.Size(170, 50);
+            lblSampling.Size = new System.Drawing.Size(83, 26);
             lblSampling.TabIndex = 7;
             lblSampling.Text = "Sample Nth Point";
             lblSampling.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -125,9 +127,10 @@
             // 
             lblDiscountFactor.AutoSize = true;
             lblDiscountFactor.Dock = System.Windows.Forms.DockStyle.Fill;
-            lblDiscountFactor.Location = new System.Drawing.Point(3, 81);
+            lblDiscountFactor.Location = new System.Drawing.Point(2, 48);
+            lblDiscountFactor.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblDiscountFactor.Name = "lblDiscountFactor";
-            lblDiscountFactor.Size = new System.Drawing.Size(170, 37);
+            lblDiscountFactor.Size = new System.Drawing.Size(83, 24);
             lblDiscountFactor.TabIndex = 8;
             lblDiscountFactor.Text = "Discount Factor";
             lblDiscountFactor.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -138,9 +141,10 @@
             this.tlpMenu.SetColumnSpan(lblTrainingHeader, 2);
             lblTrainingHeader.Dock = System.Windows.Forms.DockStyle.Fill;
             lblTrainingHeader.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            lblTrainingHeader.Location = new System.Drawing.Point(3, 0);
+            lblTrainingHeader.Location = new System.Drawing.Point(2, 0);
+            lblTrainingHeader.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblTrainingHeader.Name = "lblTrainingHeader";
-            lblTrainingHeader.Size = new System.Drawing.Size(288, 44);
+            lblTrainingHeader.Size = new System.Drawing.Size(142, 24);
             lblTrainingHeader.TabIndex = 100;
             lblTrainingHeader.Text = "Training";
             // 
@@ -148,9 +152,10 @@
             // 
             lblNumPointsToTest.AutoSize = true;
             lblNumPointsToTest.Dock = System.Windows.Forms.DockStyle.Fill;
-            lblNumPointsToTest.Location = new System.Drawing.Point(3, 658);
+            lblNumPointsToTest.Location = new System.Drawing.Point(2, 389);
+            lblNumPointsToTest.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblNumPointsToTest.Name = "lblNumPointsToTest";
-            lblNumPointsToTest.Size = new System.Drawing.Size(170, 37);
+            lblNumPointsToTest.Size = new System.Drawing.Size(83, 24);
             lblNumPointsToTest.TabIndex = 13;
             lblNumPointsToTest.Text = "# Test Points";
             lblNumPointsToTest.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -159,9 +164,10 @@
             // 
             lblNumTrainingPoints.AutoSize = true;
             lblNumTrainingPoints.Dock = System.Windows.Forms.DockStyle.Fill;
-            lblNumTrainingPoints.Location = new System.Drawing.Point(3, 118);
+            lblNumTrainingPoints.Location = new System.Drawing.Point(2, 72);
+            lblNumTrainingPoints.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblNumTrainingPoints.Name = "lblNumTrainingPoints";
-            lblNumTrainingPoints.Size = new System.Drawing.Size(170, 37);
+            lblNumTrainingPoints.Size = new System.Drawing.Size(83, 24);
             lblNumTrainingPoints.TabIndex = 14;
             lblNumTrainingPoints.Text = "Training Points";
             lblNumTrainingPoints.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -172,9 +178,10 @@
             this.tlpMenu.SetColumnSpan(lblStatusHead, 2);
             lblStatusHead.Dock = System.Windows.Forms.DockStyle.Fill;
             lblStatusHead.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            lblStatusHead.Location = new System.Drawing.Point(3, 972);
+            lblStatusHead.Location = new System.Drawing.Point(2, 572);
+            lblStatusHead.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblStatusHead.Name = "lblStatusHead";
-            lblStatusHead.Size = new System.Drawing.Size(288, 44);
+            lblStatusHead.Size = new System.Drawing.Size(142, 24);
             lblStatusHead.TabIndex = 400;
             lblStatusHead.Text = "Status";
             // 
@@ -182,9 +189,10 @@
             // 
             lblStatusCurrentLineHeader.AutoSize = true;
             lblStatusCurrentLineHeader.Dock = System.Windows.Forms.DockStyle.Fill;
-            lblStatusCurrentLineHeader.Location = new System.Drawing.Point(3, 1041);
+            lblStatusCurrentLineHeader.Location = new System.Drawing.Point(2, 609);
+            lblStatusCurrentLineHeader.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblStatusCurrentLineHeader.Name = "lblStatusCurrentLineHeader";
-            lblStatusCurrentLineHeader.Size = new System.Drawing.Size(170, 25);
+            lblStatusCurrentLineHeader.Size = new System.Drawing.Size(83, 13);
             lblStatusCurrentLineHeader.TabIndex = 18;
             lblStatusCurrentLineHeader.Text = "Data Line:";
             lblStatusCurrentLineHeader.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -193,9 +201,10 @@
             // 
             lblStatusCurrentPassHeader.AutoSize = true;
             lblStatusCurrentPassHeader.Dock = System.Windows.Forms.DockStyle.Fill;
-            lblStatusCurrentPassHeader.Location = new System.Drawing.Point(3, 1016);
+            lblStatusCurrentPassHeader.Location = new System.Drawing.Point(2, 596);
+            lblStatusCurrentPassHeader.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblStatusCurrentPassHeader.Name = "lblStatusCurrentPassHeader";
-            lblStatusCurrentPassHeader.Size = new System.Drawing.Size(170, 25);
+            lblStatusCurrentPassHeader.Size = new System.Drawing.Size(83, 13);
             lblStatusCurrentPassHeader.TabIndex = 19;
             lblStatusCurrentPassHeader.Text = "Pass:";
             lblStatusCurrentPassHeader.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -204,9 +213,10 @@
             // 
             lblExplorationRate.AutoSize = true;
             lblExplorationRate.Dock = System.Windows.Forms.DockStyle.Fill;
-            lblExplorationRate.Location = new System.Drawing.Point(3, 44);
+            lblExplorationRate.Location = new System.Drawing.Point(2, 24);
+            lblExplorationRate.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblExplorationRate.Name = "lblExplorationRate";
-            lblExplorationRate.Size = new System.Drawing.Size(170, 37);
+            lblExplorationRate.Size = new System.Drawing.Size(83, 24);
             lblExplorationRate.TabIndex = 23;
             lblExplorationRate.Text = "Exp. Rate";
             lblExplorationRate.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -217,9 +227,10 @@
             this.tlpMenu.SetColumnSpan(lblDisplayHeader, 2);
             lblDisplayHeader.Dock = System.Windows.Forms.DockStyle.Fill;
             lblDisplayHeader.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            lblDisplayHeader.Location = new System.Drawing.Point(3, 797);
+            lblDisplayHeader.Location = new System.Drawing.Point(2, 473);
+            lblDisplayHeader.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblDisplayHeader.Name = "lblDisplayHeader";
-            lblDisplayHeader.Size = new System.Drawing.Size(288, 44);
+            lblDisplayHeader.Size = new System.Drawing.Size(142, 24);
             lblDisplayHeader.TabIndex = 300;
             lblDisplayHeader.Text = "Display";
             // 
@@ -227,9 +238,10 @@
             // 
             lblTimerHeader.AutoSize = true;
             lblTimerHeader.Dock = System.Windows.Forms.DockStyle.Fill;
-            lblTimerHeader.Location = new System.Drawing.Point(3, 1066);
+            lblTimerHeader.Location = new System.Drawing.Point(2, 622);
+            lblTimerHeader.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblTimerHeader.Name = "lblTimerHeader";
-            lblTimerHeader.Size = new System.Drawing.Size(170, 25);
+            lblTimerHeader.Size = new System.Drawing.Size(83, 13);
             lblTimerHeader.TabIndex = 32;
             lblTimerHeader.Text = "Time:";
             lblTimerHeader.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -238,9 +250,10 @@
             // 
             lblClassFeature.AutoSize = true;
             lblClassFeature.Dock = System.Windows.Forms.DockStyle.Right;
-            lblClassFeature.Location = new System.Drawing.Point(27, 365);
+            lblClassFeature.Location = new System.Drawing.Point(14, 226);
+            lblClassFeature.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblClassFeature.Name = "lblClassFeature";
-            lblClassFeature.Size = new System.Drawing.Size(146, 37);
+            lblClassFeature.Size = new System.Drawing.Size(71, 24);
             lblClassFeature.TabIndex = 35;
             lblClassFeature.Text = "Class Feature";
             lblClassFeature.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -251,9 +264,10 @@
             this.tlpMenu.SetColumnSpan(lblTestingHeader, 2);
             lblTestingHeader.Dock = System.Windows.Forms.DockStyle.Fill;
             lblTestingHeader.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            lblTestingHeader.Location = new System.Drawing.Point(3, 529);
+            lblTestingHeader.Location = new System.Drawing.Point(2, 318);
+            lblTestingHeader.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblTestingHeader.Name = "lblTestingHeader";
-            lblTestingHeader.Size = new System.Drawing.Size(288, 44);
+            lblTestingHeader.Size = new System.Drawing.Size(142, 24);
             lblTestingHeader.TabIndex = 200;
             lblTestingHeader.Text = "Testing";
             // 
@@ -261,9 +275,10 @@
             // 
             lblTotalPassesHeader.AutoSize = true;
             lblTotalPassesHeader.Dock = System.Windows.Forms.DockStyle.Fill;
-            lblTotalPassesHeader.Location = new System.Drawing.Point(3, 192);
+            lblTotalPassesHeader.Location = new System.Drawing.Point(2, 120);
+            lblTotalPassesHeader.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblTotalPassesHeader.Name = "lblTotalPassesHeader";
-            lblTotalPassesHeader.Size = new System.Drawing.Size(170, 25);
+            lblTotalPassesHeader.Size = new System.Drawing.Size(83, 13);
             lblTotalPassesHeader.TabIndex = 306;
             lblTotalPassesHeader.Text = "Total Passes";
             lblTotalPassesHeader.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -272,9 +287,10 @@
             // 
             lblQueriesLimitHeader.AutoSize = true;
             lblQueriesLimitHeader.Dock = System.Windows.Forms.DockStyle.Fill;
-            lblQueriesLimitHeader.Location = new System.Drawing.Point(3, 287);
+            lblQueriesLimitHeader.Location = new System.Drawing.Point(2, 175);
+            lblQueriesLimitHeader.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             lblQueriesLimitHeader.Name = "lblQueriesLimitHeader";
-            lblQueriesLimitHeader.Size = new System.Drawing.Size(170, 37);
+            lblQueriesLimitHeader.Size = new System.Drawing.Size(83, 24);
             lblQueriesLimitHeader.TabIndex = 309;
             lblQueriesLimitHeader.Text = "Queries Limit";
             lblQueriesLimitHeader.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -295,14 +311,15 @@
             legend1.DockedToChartArea = "ChartArea1";
             legend1.Name = "Legend1";
             this.chartValues.Legends.Add(legend1);
-            this.chartValues.Location = new System.Drawing.Point(303, 3);
+            this.chartValues.Location = new System.Drawing.Point(152, 2);
+            this.chartValues.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.chartValues.Name = "chartValues";
             series1.ChartArea = "ChartArea1";
             series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastPoint;
             series1.Legend = "Legend1";
             series1.Name = "Series1";
             this.chartValues.Series.Add(series1);
-            this.chartValues.Size = new System.Drawing.Size(1303, 583);
+            this.chartValues.Size = new System.Drawing.Size(568, 225);
             this.chartValues.TabIndex = 0;
             this.chartValues.TabStop = false;
             this.chartValues.Text = "chartValues";
@@ -313,28 +330,30 @@
             // 
             this.tlpMain.AutoSize = true;
             this.tlpMain.ColumnCount = 2;
-            this.tlpMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 300F));
+            this.tlpMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 150F));
             this.tlpMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tlpMain.Controls.Add(this.chartValues, 1, 0);
             this.tlpMain.Controls.Add(this.webviewerTree, 1, 1);
             this.tlpMain.Controls.Add(this.tlpMenu, 0, 0);
             this.tlpMain.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tlpMain.Location = new System.Drawing.Point(0, 0);
+            this.tlpMain.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.tlpMain.Name = "tlpMain";
             this.tlpMain.RowCount = 2;
             this.tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tlpMain.Size = new System.Drawing.Size(1609, 1179);
+            this.tlpMain.Size = new System.Drawing.Size(722, 458);
             this.tlpMain.TabIndex = 1;
             // 
             // webviewerTree
             // 
             this.webviewerTree.AllowWebBrowserDrop = false;
             this.webviewerTree.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.webviewerTree.Location = new System.Drawing.Point(303, 592);
-            this.webviewerTree.MinimumSize = new System.Drawing.Size(20, 20);
+            this.webviewerTree.Location = new System.Drawing.Point(152, 231);
+            this.webviewerTree.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.webviewerTree.MinimumSize = new System.Drawing.Size(10, 10);
             this.webviewerTree.Name = "webviewerTree";
-            this.webviewerTree.Size = new System.Drawing.Size(1303, 584);
+            this.webviewerTree.Size = new System.Drawing.Size(568, 225);
             this.webviewerTree.TabIndex = 3;
             this.webviewerTree.TabStop = false;
             this.webviewerTree.WebBrowserShortcutsEnabled = false;
@@ -388,7 +407,8 @@
             this.tlpMenu.Controls.Add(this.btnOpenTrainingDataFile, 1, 9);
             this.tlpMenu.Controls.Add(this.txtboxClassFeature, 1, 10);
             this.tlpMenu.Controls.Add(lblClassFeature, 0, 10);
-            this.tlpMenu.Location = new System.Drawing.Point(3, 3);
+            this.tlpMenu.Location = new System.Drawing.Point(2, 2);
+            this.tlpMenu.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.tlpMenu.Name = "tlpMenu";
             this.tlpMenu.RowCount = 33;
             this.tlpMain.SetRowSpan(this.tlpMenu, 2);
@@ -406,34 +426,35 @@
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 5F));
+            this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 3F));
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 5F));
+            this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 3F));
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 5F));
+            this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 3F));
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-            this.tlpMenu.Size = new System.Drawing.Size(294, 1167);
+            this.tlpMenu.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 10F));
+            this.tlpMenu.Size = new System.Drawing.Size(146, 454);
             this.tlpMenu.TabIndex = 5;
             // 
             // txtboxQueriesLimit
             // 
             this.txtboxQueriesLimit.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtboxQueriesLimit.Location = new System.Drawing.Point(179, 290);
+            this.txtboxQueriesLimit.Location = new System.Drawing.Point(89, 177);
+            this.txtboxQueriesLimit.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.txtboxQueriesLimit.Name = "txtboxQueriesLimit";
-            this.txtboxQueriesLimit.Size = new System.Drawing.Size(112, 31);
+            this.txtboxQueriesLimit.Size = new System.Drawing.Size(55, 20);
             this.txtboxQueriesLimit.TabIndex = 107;
             this.txtboxQueriesLimit.Text = "1000";
             this.txtboxQueriesLimit.TextChanged += new System.EventHandler(this.TxtboxQueriesLimit_TextChanged);
@@ -442,9 +463,10 @@
             // 
             this.tlpMenu.SetColumnSpan(this.btnSaveData, 2);
             this.btnSaveData.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.btnSaveData.Location = new System.Drawing.Point(3, 1094);
+            this.btnSaveData.Location = new System.Drawing.Point(2, 637);
+            this.btnSaveData.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btnSaveData.Name = "btnSaveData";
-            this.btnSaveData.Size = new System.Drawing.Size(288, 50);
+            this.btnSaveData.Size = new System.Drawing.Size(142, 26);
             this.btnSaveData.TabIndex = 401;
             this.btnSaveData.Text = "Save Data to CSV";
             this.btnSaveData.UseVisualStyleBackColor = true;
@@ -454,9 +476,10 @@
             // 
             this.lblTotalPasses.AutoSize = true;
             this.lblTotalPasses.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lblTotalPasses.Location = new System.Drawing.Point(179, 192);
+            this.lblTotalPasses.Location = new System.Drawing.Point(89, 120);
+            this.lblTotalPasses.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblTotalPasses.Name = "lblTotalPasses";
-            this.lblTotalPasses.Size = new System.Drawing.Size(112, 25);
+            this.lblTotalPasses.Size = new System.Drawing.Size(55, 13);
             this.lblTotalPasses.TabIndex = 307;
             this.lblTotalPasses.Text = "0";
             this.lblTotalPasses.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -468,9 +491,10 @@
             this.chkboxParallelReportUpdates.CheckState = System.Windows.Forms.CheckState.Checked;
             this.tlpMenu.SetColumnSpan(this.chkboxParallelReportUpdates, 2);
             this.chkboxParallelReportUpdates.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.chkboxParallelReportUpdates.Location = new System.Drawing.Point(3, 255);
+            this.chkboxParallelReportUpdates.Location = new System.Drawing.Point(2, 156);
+            this.chkboxParallelReportUpdates.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.chkboxParallelReportUpdates.Name = "chkboxParallelReportUpdates";
-            this.chkboxParallelReportUpdates.Size = new System.Drawing.Size(288, 29);
+            this.chkboxParallelReportUpdates.Size = new System.Drawing.Size(142, 17);
             this.chkboxParallelReportUpdates.TabIndex = 106;
             this.chkboxParallelReportUpdates.Text = "Parallel Report Updates";
             this.chkboxParallelReportUpdates.UseVisualStyleBackColor = true;
@@ -483,9 +507,10 @@
             this.chkboxParallelQueriesUpdates.CheckState = System.Windows.Forms.CheckState.Checked;
             this.tlpMenu.SetColumnSpan(this.chkboxParallelQueriesUpdates, 2);
             this.chkboxParallelQueriesUpdates.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.chkboxParallelQueriesUpdates.Location = new System.Drawing.Point(3, 220);
+            this.chkboxParallelQueriesUpdates.Location = new System.Drawing.Point(2, 135);
+            this.chkboxParallelQueriesUpdates.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.chkboxParallelQueriesUpdates.Name = "chkboxParallelQueriesUpdates";
-            this.chkboxParallelQueriesUpdates.Size = new System.Drawing.Size(288, 29);
+            this.chkboxParallelQueriesUpdates.Size = new System.Drawing.Size(142, 17);
             this.chkboxParallelQueriesUpdates.TabIndex = 105;
             this.chkboxParallelQueriesUpdates.Text = "Parallel Query Updates";
             this.chkboxParallelQueriesUpdates.UseVisualStyleBackColor = true;
@@ -494,9 +519,10 @@
             // lblTimer
             // 
             this.lblTimer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lblTimer.Location = new System.Drawing.Point(179, 1066);
+            this.lblTimer.Location = new System.Drawing.Point(89, 622);
+            this.lblTimer.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblTimer.Name = "lblTimer";
-            this.lblTimer.Size = new System.Drawing.Size(112, 25);
+            this.lblTimer.Size = new System.Drawing.Size(55, 13);
             this.lblTimer.TabIndex = 33;
             this.lblTimer.Text = "0";
             this.lblTimer.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -505,9 +531,10 @@
             // 
             this.btnOpenTestingDataFile.AutoSize = true;
             this.btnOpenTestingDataFile.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.btnOpenTestingDataFile.Location = new System.Drawing.Point(179, 698);
+            this.btnOpenTestingDataFile.Location = new System.Drawing.Point(89, 415);
+            this.btnOpenTestingDataFile.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btnOpenTestingDataFile.Name = "btnOpenTestingDataFile";
-            this.btnOpenTestingDataFile.Size = new System.Drawing.Size(112, 35);
+            this.btnOpenTestingDataFile.Size = new System.Drawing.Size(55, 23);
             this.btnOpenTestingDataFile.TabIndex = 204;
             this.btnOpenTestingDataFile.Text = "File";
             this.btnOpenTestingDataFile.UseVisualStyleBackColor = true;
@@ -517,9 +544,10 @@
             // 
             this.lblTestingDataFile.AutoSize = true;
             this.lblTestingDataFile.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lblTestingDataFile.Location = new System.Drawing.Point(3, 695);
+            this.lblTestingDataFile.Location = new System.Drawing.Point(2, 413);
+            this.lblTestingDataFile.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblTestingDataFile.Name = "lblTestingDataFile";
-            this.lblTestingDataFile.Size = new System.Drawing.Size(170, 41);
+            this.lblTestingDataFile.Size = new System.Drawing.Size(83, 27);
             this.lblTestingDataFile.TabIndex = 30;
             this.lblTestingDataFile.Text = "(pick file)";
             this.lblTestingDataFile.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -528,9 +556,10 @@
             // 
             this.lblTrainingDataFile.AutoSize = true;
             this.lblTrainingDataFile.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lblTrainingDataFile.Location = new System.Drawing.Point(3, 324);
+            this.lblTrainingDataFile.Location = new System.Drawing.Point(2, 199);
+            this.lblTrainingDataFile.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblTrainingDataFile.Name = "lblTrainingDataFile";
-            this.lblTrainingDataFile.Size = new System.Drawing.Size(170, 41);
+            this.lblTrainingDataFile.Size = new System.Drawing.Size(83, 27);
             this.lblTrainingDataFile.TabIndex = 29;
             this.lblTrainingDataFile.Text = "(pick file)";
             this.lblTrainingDataFile.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -539,9 +568,10 @@
             // 
             this.tlpMenu.SetColumnSpan(this.btnTestPolicy, 2);
             this.btnTestPolicy.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.btnTestPolicy.Location = new System.Drawing.Point(3, 739);
+            this.btnTestPolicy.Location = new System.Drawing.Point(2, 442);
+            this.btnTestPolicy.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btnTestPolicy.Name = "btnTestPolicy";
-            this.btnTestPolicy.Size = new System.Drawing.Size(288, 50);
+            this.btnTestPolicy.Size = new System.Drawing.Size(142, 26);
             this.btnTestPolicy.TabIndex = 205;
             this.btnTestPolicy.Text = "Test Policy";
             this.btnTestPolicy.UseVisualStyleBackColor = true;
@@ -554,9 +584,10 @@
             this.chBoxShowSubScores.CheckState = System.Windows.Forms.CheckState.Checked;
             this.tlpMenu.SetColumnSpan(this.chBoxShowSubScores, 2);
             this.chBoxShowSubScores.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.chBoxShowSubScores.Location = new System.Drawing.Point(3, 900);
+            this.chBoxShowSubScores.Location = new System.Drawing.Point(2, 529);
+            this.chBoxShowSubScores.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.chBoxShowSubScores.Name = "chBoxShowSubScores";
-            this.chBoxShowSubScores.Size = new System.Drawing.Size(288, 29);
+            this.chBoxShowSubScores.Size = new System.Drawing.Size(142, 17);
             this.chBoxShowSubScores.TabIndex = 302;
             this.chBoxShowSubScores.Text = "Show Subscores";
             this.chBoxShowSubScores.UseVisualStyleBackColor = true;
@@ -565,9 +596,10 @@
             // txtBoxExplorationRate
             // 
             this.txtBoxExplorationRate.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtBoxExplorationRate.Location = new System.Drawing.Point(179, 47);
+            this.txtBoxExplorationRate.Location = new System.Drawing.Point(89, 26);
+            this.txtBoxExplorationRate.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.txtBoxExplorationRate.Name = "txtBoxExplorationRate";
-            this.txtBoxExplorationRate.Size = new System.Drawing.Size(112, 31);
+            this.txtBoxExplorationRate.Size = new System.Drawing.Size(55, 20);
             this.txtBoxExplorationRate.TabIndex = 101;
             this.txtBoxExplorationRate.Text = "0.30";
             this.txtBoxExplorationRate.TextChanged += new System.EventHandler(this.TxtBoxExplorationRate_TextChanged);
@@ -575,9 +607,10 @@
             // lblCurrentLine
             // 
             this.lblCurrentLine.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lblCurrentLine.Location = new System.Drawing.Point(179, 1041);
+            this.lblCurrentLine.Location = new System.Drawing.Point(89, 609);
+            this.lblCurrentLine.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblCurrentLine.Name = "lblCurrentLine";
-            this.lblCurrentLine.Size = new System.Drawing.Size(112, 25);
+            this.lblCurrentLine.Size = new System.Drawing.Size(55, 13);
             this.lblCurrentLine.TabIndex = 21;
             this.lblCurrentLine.Text = "0";
             this.lblCurrentLine.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -585,9 +618,10 @@
             // lblCurrentPass
             // 
             this.lblCurrentPass.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lblCurrentPass.Location = new System.Drawing.Point(179, 1016);
+            this.lblCurrentPass.Location = new System.Drawing.Point(89, 596);
+            this.lblCurrentPass.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblCurrentPass.Name = "lblCurrentPass";
-            this.lblCurrentPass.Size = new System.Drawing.Size(112, 25);
+            this.lblCurrentPass.Size = new System.Drawing.Size(55, 13);
             this.lblCurrentPass.TabIndex = 20;
             this.lblCurrentPass.Text = "0";
             this.lblCurrentPass.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -595,9 +629,10 @@
             // txtboxNumTrainingPoints
             // 
             this.txtboxNumTrainingPoints.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtboxNumTrainingPoints.Location = new System.Drawing.Point(179, 121);
+            this.txtboxNumTrainingPoints.Location = new System.Drawing.Point(89, 74);
+            this.txtboxNumTrainingPoints.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.txtboxNumTrainingPoints.Name = "txtboxNumTrainingPoints";
-            this.txtboxNumTrainingPoints.Size = new System.Drawing.Size(112, 31);
+            this.txtboxNumTrainingPoints.Size = new System.Drawing.Size(55, 20);
             this.txtboxNumTrainingPoints.TabIndex = 103;
             this.txtboxNumTrainingPoints.Text = "10000";
             this.txtboxNumTrainingPoints.TextChanged += new System.EventHandler(this.TxtboxNumTrainingPoints_TextChanged);
@@ -605,9 +640,10 @@
             // txtboxNumTestPoints
             // 
             this.txtboxNumTestPoints.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtboxNumTestPoints.Location = new System.Drawing.Point(179, 661);
+            this.txtboxNumTestPoints.Location = new System.Drawing.Point(89, 391);
+            this.txtboxNumTestPoints.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.txtboxNumTestPoints.Name = "txtboxNumTestPoints";
-            this.txtboxNumTestPoints.Size = new System.Drawing.Size(112, 31);
+            this.txtboxNumTestPoints.Size = new System.Drawing.Size(55, 20);
             this.txtboxNumTestPoints.TabIndex = 203;
             this.txtboxNumTestPoints.Text = "50";
             this.txtboxNumTestPoints.TextChanged += new System.EventHandler(this.TxtboxNumTestPoints_TextChanged);
@@ -617,9 +653,10 @@
             this.tlpMenu.SetColumnSpan(this.btnRedraw, 2);
             this.btnRedraw.Dock = System.Windows.Forms.DockStyle.Fill;
             this.btnRedraw.Enabled = false;
-            this.btnRedraw.Location = new System.Drawing.Point(3, 844);
+            this.btnRedraw.Location = new System.Drawing.Point(2, 499);
+            this.btnRedraw.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btnRedraw.Name = "btnRedraw";
-            this.btnRedraw.Size = new System.Drawing.Size(288, 50);
+            this.btnRedraw.Size = new System.Drawing.Size(142, 26);
             this.btnRedraw.TabIndex = 301;
             this.btnRedraw.Text = "Redraw Tree";
             this.btnRedraw.UseVisualStyleBackColor = true;
@@ -628,9 +665,10 @@
             // txtboxPasses
             // 
             this.txtboxPasses.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtboxPasses.Location = new System.Drawing.Point(179, 158);
+            this.txtboxPasses.Location = new System.Drawing.Point(89, 98);
+            this.txtboxPasses.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.txtboxPasses.Name = "txtboxPasses";
-            this.txtboxPasses.Size = new System.Drawing.Size(112, 31);
+            this.txtboxPasses.Size = new System.Drawing.Size(55, 20);
             this.txtboxPasses.TabIndex = 104;
             this.txtboxPasses.Text = "10";
             this.txtboxPasses.TextChanged += new System.EventHandler(this.TxtboxPasses_TextChanged);
@@ -639,9 +677,10 @@
             // 
             this.tlpMenu.SetColumnSpan(this.btnTrain, 2);
             this.btnTrain.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.btnTrain.Location = new System.Drawing.Point(3, 405);
+            this.btnTrain.Location = new System.Drawing.Point(2, 252);
+            this.btnTrain.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btnTrain.Name = "btnTrain";
-            this.btnTrain.Size = new System.Drawing.Size(288, 60);
+            this.btnTrain.Size = new System.Drawing.Size(142, 31);
             this.btnTrain.TabIndex = 110;
             this.btnTrain.Text = "Train";
             this.btnTrain.UseVisualStyleBackColor = true;
@@ -650,21 +689,23 @@
             // txtboxSampleNthPoint
             // 
             this.txtboxSampleNthPoint.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtboxSampleNthPoint.Location = new System.Drawing.Point(179, 611);
+            this.txtboxSampleNthPoint.Location = new System.Drawing.Point(89, 365);
+            this.txtboxSampleNthPoint.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.txtboxSampleNthPoint.Name = "txtboxSampleNthPoint";
-            this.txtboxSampleNthPoint.Size = new System.Drawing.Size(112, 31);
+            this.txtboxSampleNthPoint.Size = new System.Drawing.Size(55, 20);
             this.txtboxSampleNthPoint.TabIndex = 202;
             this.txtboxSampleNthPoint.Text = "50";
-            this.txtboxSampleNthPoint.TextChanged += new System.EventHandler(this.txtboxSampleNthPoint_TextChanged);
+            this.txtboxSampleNthPoint.TextChanged += new System.EventHandler(this.TxtboxSampleNthPoint_TextChanged);
             // 
             // btnReset
             // 
             this.tlpMenu.SetColumnSpan(this.btnReset, 2);
             this.btnReset.Dock = System.Windows.Forms.DockStyle.Fill;
             this.btnReset.Enabled = false;
-            this.btnReset.Location = new System.Drawing.Point(3, 471);
+            this.btnReset.Location = new System.Drawing.Point(2, 287);
+            this.btnReset.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btnReset.Name = "btnReset";
-            this.btnReset.Size = new System.Drawing.Size(288, 50);
+            this.btnReset.Size = new System.Drawing.Size(142, 26);
             this.btnReset.TabIndex = 111;
             this.btnReset.Text = "Reset";
             this.btnReset.UseVisualStyleBackColor = true;
@@ -673,9 +714,10 @@
             // txtboxDiscountFactor
             // 
             this.txtboxDiscountFactor.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtboxDiscountFactor.Location = new System.Drawing.Point(179, 84);
+            this.txtboxDiscountFactor.Location = new System.Drawing.Point(89, 50);
+            this.txtboxDiscountFactor.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.txtboxDiscountFactor.Name = "txtboxDiscountFactor";
-            this.txtboxDiscountFactor.Size = new System.Drawing.Size(112, 31);
+            this.txtboxDiscountFactor.Size = new System.Drawing.Size(55, 20);
             this.txtboxDiscountFactor.TabIndex = 102;
             this.txtboxDiscountFactor.Text = "0.80";
             this.txtboxDiscountFactor.TextChanged += new System.EventHandler(this.TxtboxDiscountFactor_TextChanged);
@@ -687,9 +729,10 @@
             this.chboxTestPolicy.CheckState = System.Windows.Forms.CheckState.Checked;
             this.tlpMenu.SetColumnSpan(this.chboxTestPolicy, 2);
             this.chboxTestPolicy.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.chboxTestPolicy.Location = new System.Drawing.Point(3, 576);
+            this.chboxTestPolicy.Location = new System.Drawing.Point(2, 344);
+            this.chboxTestPolicy.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.chboxTestPolicy.Name = "chboxTestPolicy";
-            this.chboxTestPolicy.Size = new System.Drawing.Size(288, 29);
+            this.chboxTestPolicy.Size = new System.Drawing.Size(142, 17);
             this.chboxTestPolicy.TabIndex = 201;
             this.chboxTestPolicy.Text = "Test Each Sample";
             this.chboxTestPolicy.UseVisualStyleBackColor = true;
@@ -702,9 +745,10 @@
             this.chboxShowBlanks.CheckState = System.Windows.Forms.CheckState.Checked;
             this.tlpMenu.SetColumnSpan(this.chboxShowBlanks, 2);
             this.chboxShowBlanks.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.chboxShowBlanks.Location = new System.Drawing.Point(3, 935);
+            this.chboxShowBlanks.Location = new System.Drawing.Point(2, 550);
+            this.chboxShowBlanks.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.chboxShowBlanks.Name = "chboxShowBlanks";
-            this.chboxShowBlanks.Size = new System.Drawing.Size(288, 29);
+            this.chboxShowBlanks.Size = new System.Drawing.Size(142, 17);
             this.chboxShowBlanks.TabIndex = 303;
             this.chboxShowBlanks.Text = "Show Blanks";
             this.chboxShowBlanks.UseVisualStyleBackColor = true;
@@ -714,9 +758,10 @@
             // 
             this.btnOpenTrainingDataFile.AutoSize = true;
             this.btnOpenTrainingDataFile.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.btnOpenTrainingDataFile.Location = new System.Drawing.Point(179, 327);
+            this.btnOpenTrainingDataFile.Location = new System.Drawing.Point(89, 201);
+            this.btnOpenTrainingDataFile.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btnOpenTrainingDataFile.Name = "btnOpenTrainingDataFile";
-            this.btnOpenTrainingDataFile.Size = new System.Drawing.Size(112, 35);
+            this.btnOpenTrainingDataFile.Size = new System.Drawing.Size(55, 23);
             this.btnOpenTrainingDataFile.TabIndex = 108;
             this.btnOpenTrainingDataFile.Text = "File";
             this.btnOpenTrainingDataFile.UseVisualStyleBackColor = true;
@@ -725,21 +770,23 @@
             // txtboxClassFeature
             // 
             this.txtboxClassFeature.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtboxClassFeature.Location = new System.Drawing.Point(179, 368);
+            this.txtboxClassFeature.Location = new System.Drawing.Point(89, 228);
+            this.txtboxClassFeature.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.txtboxClassFeature.Name = "txtboxClassFeature";
-            this.txtboxClassFeature.Size = new System.Drawing.Size(112, 31);
+            this.txtboxClassFeature.Size = new System.Drawing.Size(55, 20);
             this.txtboxClassFeature.TabIndex = 109;
             this.txtboxClassFeature.TextChanged += new System.EventHandler(this.TxtboxClassFeature_TextChanged);
             // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(1609, 1179);
+            this.ClientSize = new System.Drawing.Size(722, 458);
             this.Controls.Add(this.tlpMain);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "RL Decision Tree";

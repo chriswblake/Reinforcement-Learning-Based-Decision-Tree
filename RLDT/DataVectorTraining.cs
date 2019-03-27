@@ -74,6 +74,7 @@ namespace RLDT
         public void SetLabel(string featureName, object value)
         {
             this.Label = new FeatureValuePair(featureName, value);
+            this.Features.RemoveAll(p => p.Name == featureName);
         }
 
         //Debug

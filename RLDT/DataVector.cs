@@ -28,10 +28,7 @@ namespace RLDT
         }
 
         //Constructors
-        /// <summary>
-        /// Allows derived classes to work without requiring the base constructor.
-        /// </summary>
-        protected DataVector()
+        public DataVector()
         {
             Features = new List<FeatureValuePair>();
         }

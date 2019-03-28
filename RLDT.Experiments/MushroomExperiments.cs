@@ -20,11 +20,13 @@ namespace RLDT.Experiments
         readonly bool defaultParallelReportUpdatesEnabled = false;
         readonly int defaultQueriesLimit = 1000;
         readonly int defaultTestingInterval = 500;
+        readonly int defaultDatasetTrainingPercentage = 80;
+        readonly int defaultDatasetTestingPercentage = 80;
 
         [Theory]
         [InlineData("original", 80)]
         [InlineData("random", 80)]
-        [InlineData("randomInversedClass", 80)]
+        [InlineData("randomInversedLabel", 80)]
         private string DataSets(string name, int percentage)
         {
             //Remove folder information and extension
@@ -102,13 +104,13 @@ namespace RLDT.Experiments
 
             #region Datasets
             //Training parameters
-            string trainingCsvPath = DataSets(datasetName, 80);
+            string trainingCsvPath = DataSets(datasetName, defaultDatasetTrainingPercentage);
             CsvStreamReader trainingData = new CsvStreamReader(trainingCsvPath);
             string trainingLabelName = "class";
             int passes = 1;
 
             //Testing Parameters
-            string testingCsvPath = DataSets(datasetName, 20);
+            string testingCsvPath = DataSets(datasetName, defaultDatasetTestingPercentage);
             CsvStreamReader testingData = new CsvStreamReader(testingCsvPath);
             string testingLabelName = "class";
             int testingInterval = defaultTestingInterval;
@@ -270,13 +272,13 @@ namespace RLDT.Experiments
 
             #region Datasets
             //Training
-            string trainingCsvPath = DataSets("random", 80);
+            string trainingCsvPath = DataSets("random", defaultDatasetTrainingPercentage);
             CsvStreamReader trainingData = new CsvStreamReader(trainingCsvPath);
             string trainingLabelName = "class";
             int passes = 1;
 
             //Testing
-            string testingCsvPath = DataSets("random", 20);
+            string testingCsvPath = DataSets("random", defaultDatasetTestingPercentage);
             CsvStreamReader testingData = new CsvStreamReader(testingCsvPath);
             string testingLabelName = "class";
             int testingInterval = defaultTestingInterval;
@@ -436,13 +438,13 @@ namespace RLDT.Experiments
 
             #region Datasets
             //Training
-            string trainingCsvPath = DataSets("random", 80);
+            string trainingCsvPath = DataSets("random", defaultDatasetTrainingPercentage);
             CsvStreamReader trainingData = new CsvStreamReader(trainingCsvPath);
             string trainingLabelName = "class";
             int passes = 1;
 
             //Testing
-            string testingCsvPath = DataSets("random", 20);
+            string testingCsvPath = DataSets("random", defaultDatasetTestingPercentage);
             CsvStreamReader testingData = new CsvStreamReader(testingCsvPath);
             string testingLabelName = "class";
             int testingInterval = defaultTestingInterval;
@@ -596,5 +598,189 @@ namespace RLDT.Experiments
             trainingData.Close();
             testingData.Close();
         }
+
+        [Fact]
+        public void Drifting()
+        {
+            #region Result Storage
+            DataTable results = new DataTable();
+            results.Columns.Add("Id", typeof(int));
+            results.Columns.Add("InversedLabel", typeof(string));
+            results.Columns.Add("Pass", typeof(int));
+            results.Columns.Add("Instance Id", typeof(int));
+            results.Columns.Add("Processed Total", typeof(int));
+            results.Columns.Add("States Total", typeof(int));
+            results.Columns.Add("Testing Accuracy", typeof(double));
+            results.Columns.Add("Training Time", typeof(int));
+            results.Columns.Add("Testing Time", typeof(int));
+            #endregion
+
+            #region Datasets
+            int passes = 4; // 1 pass normal, 1 pass inversed, repeat
+            string trainingNormalLabelName = "class";
+            string testingNormalLabelName = "class";
+            int testingInterval = 50;// defaultTestingInterval;
+
+            //Training (normal)
+            string trainingNormalCsvPath = DataSets("random", defaultDatasetTrainingPercentage);
+            CsvStreamReader trainingNormalData = new CsvStreamReader(trainingNormalCsvPath);
+
+            //Training (inversed)
+            string trainingInversedCsvPath = DataSets("randomInversedLabel", defaultDatasetTrainingPercentage);
+            CsvStreamReader trainingInversedData = new CsvStreamReader(trainingInversedCsvPath);
+
+            //Testing (normal)
+            string testingNormalCsvPath = DataSets("random", defaultDatasetTestingPercentage);
+            CsvStreamReader testingNormalData = new CsvStreamReader(testingNormalCsvPath);
+
+            //Testing (inversed)
+            string testingInversedCsvPath = DataSets("randomInversedLabel", defaultDatasetTestingPercentage);
+            CsvStreamReader testingInversedData = new CsvStreamReader(testingInversedCsvPath);
+            #endregion
+
+            #region Policy configuration
+            Policy thePolicy = new Policy()
+            {
+                ExplorationRate = defaultExplorationRate,
+                DiscountFactor = defaultDiscountFactor,
+                ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
+                ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
+                QueriesLimit = defaultQueriesLimit,
+            };
+
+            #endregion
+
+            #region Processing
+            Stopwatch stopwatchProcessing = new Stopwatch(); stopwatchProcessing.Start();
+            int processedTotal = 0;
+            for (int pass = 1; pass <= passes; pass++)
+            {
+                //Choose normal or inversed datasets
+                CsvStreamReader trainingData = trainingNormalData;
+                CsvStreamReader testingData = testingNormalData;
+                bool inversedLabel = false;
+                if (pass % 2 == 0)
+                {
+                    trainingData = trainingInversedData;
+                    testingData = testingInversedData;
+                    inversedLabel = true;
+                }
+
+                //Cycle through each instance in the training file
+                while (!trainingData.EndOfStream)
+                {
+                    //Submit to Trainer
+                    Stopwatch stopwatchTraining = new Stopwatch();
+                    stopwatchTraining.Start();
+                    DataVectorTraining instanceTraining = trainingData.ReadLine(trainingNormalLabelName);
+                    TrainingStats trainingStats = thePolicy.Learn(instanceTraining);
+                    processedTotal++;
+                    stopwatchTraining.Stop();
+
+                    //Record training stats
+                    DataRow result = results.NewRow();
+                    results.Rows.Add(result);
+                    result["Id"] = results.Rows.Count;
+                    result["InversedLabel"] = inversedLabel.ToString();
+                    result["Pass"] = pass;
+                    result["Instance Id"] = trainingData.LineNumber;
+                    result["Processed Total"] = processedTotal;
+                    result["States Total"] = trainingStats.StatesTotal;
+                    result["Training Time"] = stopwatchTraining.ElapsedMilliseconds;
+
+                    if (processedTotal % testingInterval == 0)
+                    {
+                        //Submit to Tester
+                        int testedCount = 0;
+                        int correctCount = 0;
+                        Stopwatch stopwatchTesting = new Stopwatch();
+                        stopwatchTesting.Start();
+                        while (!testingData.EndOfStream)
+                        {
+                            DataVectorTraining instanceTesting = testingData.ReadLine(testingNormalLabelName);
+                            //Get values to compare
+                            object prediction = thePolicy.DecisionTree.Classify(instanceTesting);
+                            object correctAnswer = instanceTesting.Label.Value;
+
+                            //Check answer
+                            testedCount++;
+                            if (prediction.Equals(correctAnswer))
+                                correctCount++;
+                        }
+                        stopwatchTesting.Stop();
+                        testingData.SeekOriginBegin();
+
+                        //Record testing stats
+                        result["Testing Accuracy"] = correctCount / (double)testedCount;
+                        result["Testing Time"] = stopwatchTesting.ElapsedMilliseconds;
+                    }
+                }
+
+                //Reset training dataset
+                trainingData.SeekOriginBegin();
+            }
+            stopwatchProcessing.Stop();
+            #endregion
+
+            #region Save Results
+            // Save to CSV file
+            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
+
+            #region Save chart to html and pdf
+            //Create charts
+            Chart chartStates = new Chart("States vs Processed", "Processed", "States");
+            Chart chartAccuracy = new Chart("Accuracy vs Processed", "Processed", "% Correct");
+
+            //Add data to chart
+            foreach (DataRow r in results.Rows)
+            {
+                chartStates.Add("States", (int)r["Processed Total"], (int)r["States Total"]);
+                if (r["Testing Accuracy"] != DBNull.Value)
+                    chartAccuracy.Add("Accuracy", (int)r["Processed Total"], (double)r["Testing Accuracy"]);
+            }
+
+            //Save charts
+            chartStates.ToHtml(Path.Combine(ResultsDir, "States"));
+            chartStates.ToPdf(Path.Combine(ResultsDir, "States"));
+
+            chartAccuracy.ToHtml(Path.Combine(ResultsDir, "Accuracy"));
+            chartAccuracy.ToPdf(Path.Combine(ResultsDir, "Accuracy"));
+            #endregion
+
+            #region Save metadata file
+            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details.txt"));
+            swMeta.WriteLine("# Training Configuration");
+            swMeta.WriteLine("Training File: " + Path.GetFileName(trainingNormalCsvPath));
+            swMeta.WriteLine("Training File Path: " + trainingNormalCsvPath);
+            swMeta.WriteLine("Testing File: " + Path.GetFileName(testingNormalCsvPath));
+            swMeta.WriteLine("Testing File Path: " + testingNormalCsvPath);
+            swMeta.WriteLine("Total Processing Time (ms): " + stopwatchProcessing.ElapsedMilliseconds);
+
+            swMeta.WriteLine();
+
+            swMeta.WriteLine("# Policy Configuration");
+            swMeta.WriteLine("Exploration Rate: " + thePolicy.ExplorationRate.ToString("N2"));
+            swMeta.WriteLine("Discount Factor: " + thePolicy.DiscountFactor);
+            swMeta.WriteLine("Parallel Query Updates: " + thePolicy.ParallelQueryUpdatesEnabled);
+            swMeta.WriteLine("Parallel Report Updates: " + thePolicy.ParallelReportUpdatesEnabled);
+            swMeta.Close();
+            #endregion
+
+            #region Save decision tree (as HTML)
+            DecisionTree.TreeSettings ts_simple = new DecisionTree.TreeSettings()
+            {
+                ShowBlanks = false,
+                ShowSubScores = false
+            };
+            File.WriteAllText(Path.Combine(ResultsDir, "tree-full.html"), thePolicy.DecisionTree.ToHtmlTree());
+            File.WriteAllText(Path.Combine(ResultsDir, "tree-simple.html"), thePolicy.ToDecisionTree(ts_simple).ToHtmlTree());
+            #endregion
+            #endregion
+
+            //Close datasets
+            trainingNormalData.Close();
+            testingNormalData.Close();
+        }
+
     }
 }

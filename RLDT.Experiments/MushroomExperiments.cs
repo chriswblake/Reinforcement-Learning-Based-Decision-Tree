@@ -22,18 +22,68 @@ namespace RLDT.Experiments
         readonly int defaultTestingInterval = 500;
 
         [Theory]
-        [InlineData("original.csv")]
-        [InlineData("random.csv")]
-        private string DataSets(string name)
+        [InlineData("original", 80)]
+        [InlineData("random", 80)]
+        [InlineData("randomInversedClass", 80)]
+        private string DataSets(string name, int percentage)
         {
+            //Remove folder information and extension
+            name = Path.GetFileNameWithoutExtension(name);
+
+            //Check that source file is valid
             string path = Path.Combine(ResultsDir, name);
-            Assert.True(File.Exists(path));
-            return path;
+            Assert.True(File.Exists(path+".csv"));
+
+            //Check the percentages
+            Assert.InRange(percentage, 1, 99);
+            int percentTraining = percentage;
+            int percentTesting = Math.Abs(100 - percentage);
+            if (percentTesting > percentTraining)
+            {
+                percentTraining = percentTesting;
+                percentTesting = percentage;
+            }
+
+            //Sample the source CV file and create training and testing versions.
+            int lineCounter = 0;
+            if(!File.Exists(path+percentage+".csv") || !File.Exists(path+percentTesting+".csv"))
+            {
+                StreamReader sr = new StreamReader(path+".csv");
+                StreamWriter swTraining = new StreamWriter(path+percentTraining+".csv");
+                StreamWriter swTesting = new StreamWriter(path+percentTesting+".csv");
+                Random rand = new Random();
+
+                //Add headers
+                string headers = sr.ReadLine();
+                swTraining.WriteLine(headers);
+                swTesting.WriteLine(headers);
+
+                //Copy data over
+                while (!sr.EndOfStream)
+                {
+                    string line = sr.ReadLine(); lineCounter++;
+                    if (rand.Next(0,101) <= percentage)
+                        swTraining.WriteLine(line);
+                    else
+                        swTesting.WriteLine(line);
+                }
+
+                sr.Close();
+                swTraining.Close();
+                swTesting.Close();
+            }
+            Assert.True(File.Exists(path+percentTraining+".csv"));
+            Assert.True(File.Exists(path+percentTesting+".csv"));
+
+            //Provide the training or testing CSV path
+            string pathRequest = Path.Combine(ResultsDir, name+percentage+".csv");
+
+            return pathRequest;
         }
 
         [Theory]
-        [InlineData("original.csv")]
-        [InlineData("random.csv")]
+        [InlineData("original")]
+        [InlineData("random")]
         public void DataOrder(string datasetName)
         {
             string order = Path.GetFileNameWithoutExtension(datasetName);
@@ -52,13 +102,13 @@ namespace RLDT.Experiments
 
             #region Datasets
             //Training parameters
-            string trainingCsvPath = DataSets(datasetName);
+            string trainingCsvPath = DataSets(datasetName, 80);
             CsvStreamReader trainingData = new CsvStreamReader(trainingCsvPath);
             string trainingLabelName = "class";
             int passes = 1;
 
             //Testing Parameters
-            string testingCsvPath = DataSets("random.csv");
+            string testingCsvPath = DataSets(datasetName, 20);
             CsvStreamReader testingData = new CsvStreamReader(testingCsvPath);
             string testingLabelName = "class";
             int testingInterval = defaultTestingInterval;
@@ -220,13 +270,13 @@ namespace RLDT.Experiments
 
             #region Datasets
             //Training
-            string trainingCsvPath = DataSets("random.csv");
+            string trainingCsvPath = DataSets("random", 80);
             CsvStreamReader trainingData = new CsvStreamReader(trainingCsvPath);
             string trainingLabelName = "class";
             int passes = 1;
 
             //Testing
-            string testingCsvPath = DataSets("random.csv");
+            string testingCsvPath = DataSets("random", 20);
             CsvStreamReader testingData = new CsvStreamReader(testingCsvPath);
             string testingLabelName = "class";
             int testingInterval = defaultTestingInterval;
@@ -386,13 +436,13 @@ namespace RLDT.Experiments
 
             #region Datasets
             //Training
-            string trainingCsvPath = DataSets("random.csv");
+            string trainingCsvPath = DataSets("random", 80);
             CsvStreamReader trainingData = new CsvStreamReader(trainingCsvPath);
             string trainingLabelName = "class";
             int passes = 1;
 
             //Testing
-            string testingCsvPath = DataSets("random.csv");
+            string testingCsvPath = DataSets("random", 20);
             CsvStreamReader testingData = new CsvStreamReader(testingCsvPath);
             string testingLabelName = "class";
             int testingInterval = defaultTestingInterval;

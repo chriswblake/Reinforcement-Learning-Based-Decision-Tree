@@ -23,6 +23,23 @@ namespace RLDT.Experiments
         readonly int defaultDatasetTrainingPercentage = 80;
         readonly int defaultDatasetTestingPercentage = 80;
 
+
+        [Fact]
+        private void Confusion()
+        {
+            ConfusionMatrix cm = new ConfusionMatrix();
+            cm.AddEntry(1, 1);
+            cm.AddEntry(1, 2);
+            cm.AddEntry(2, 2);
+            cm.AddEntry(2, 2);
+            cm.AddEntry(2, 2);
+            cm.AddEntry(2, 2);
+            cm.AddEntry(2, 2);
+            cm.AddEntry(2, 2);
+
+            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix.html"), cm.ToHtml());
+        }
+
         [Theory]
         [InlineData("original", 80)]
         [InlineData("random", 80)]
@@ -84,7 +101,7 @@ namespace RLDT.Experiments
         }
 
         [Theory]
-        [InlineData("original")]
+        //[InlineData("original")]
         [InlineData("random")]
         public void DataOrder(string datasetName)
         {
@@ -100,6 +117,7 @@ namespace RLDT.Experiments
             results.Columns.Add("Testing Accuracy", typeof(double));
             results.Columns.Add("Training Time", typeof(long));
             results.Columns.Add("Testing Time", typeof(long));
+            results.Columns.Add("Confusion Matrix", typeof(ConfusionMatrix));
             #endregion
 
             #region Datasets
@@ -159,6 +177,7 @@ namespace RLDT.Experiments
                         //Submit to Tester
                         int testedCount = 0;
                         int correctCount = 0;
+                        ConfusionMatrix confusionMatrix = new ConfusionMatrix();
                         Stopwatch stopwatchTesting = new Stopwatch();
                         stopwatchTesting.Start();
                         while (!testingData.EndOfStream)
@@ -172,6 +191,9 @@ namespace RLDT.Experiments
                             testedCount++;
                             if (prediction.Equals(correctAnswer))
                                 correctCount++;
+
+                            //Build Confusion matrix
+                            confusionMatrix.AddEntry(correctAnswer, prediction);
                         }
                         stopwatchTesting.Stop();
                         testingData.SeekOriginBegin();
@@ -179,6 +201,7 @@ namespace RLDT.Experiments
                         //Record testing stats
                         result["Testing Accuracy"] = correctCount / (double)testedCount;
                         result["Testing Time"] = stopwatchTesting.ElapsedMilliseconds;
+                        result["Confusion Matrix"] = confusionMatrix;
                     }
                 }
 
@@ -214,6 +237,29 @@ namespace RLDT.Experiments
             chartAccuracy.ToHtml(Path.Combine(ResultsDir, "Accuracy " + suffix));
             chartAccuracy.ToPdf(Path.Combine(ResultsDir, "Accuracy " + suffix));
             #endregion
+
+            //Save confusion matrices
+            string htmlConfusionMatrix = "<html>";
+            htmlConfusionMatrix += ConfusionMatrix.HtmlStyling;
+            htmlConfusionMatrix += "<table>";
+            htmlConfusionMatrix += "<tr>";
+            htmlConfusionMatrix += "<th>Processed Points</th>";
+            htmlConfusionMatrix += "<th>Confusion Matrix</th>";
+            htmlConfusionMatrix += "</tr>";
+            foreach (DataRow dr in results.Rows.Cast<DataRow>().Where(p => p["Confusion Matrix"] != DBNull.Value))
+            {
+                ConfusionMatrix cm = (ConfusionMatrix)dr["Confusion Matrix"];
+
+                htmlConfusionMatrix += "<tr>";
+                htmlConfusionMatrix += String.Format("<td>{0}</td>", dr["Processed Total"]);
+                htmlConfusionMatrix += String.Format("<td>{0}</td>", cm.ToHtml());
+                htmlConfusionMatrix += "</tr>";
+                htmlConfusionMatrix += Environment.NewLine;
+                htmlConfusionMatrix += Environment.NewLine;
+            }
+            htmlConfusionMatrix += "</table>";
+            htmlConfusionMatrix += "</html>";
+            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix.html"), htmlConfusionMatrix);
 
             #region Save metadata file
             StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details "+suffix+".txt"));

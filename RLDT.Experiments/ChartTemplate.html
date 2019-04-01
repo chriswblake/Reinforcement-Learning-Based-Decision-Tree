@@ -54,48 +54,54 @@
     };
     function load()
     {
-      new Chart(document.getElementById("scatter-chart"), {
-        type: 'scatter',
-        data: series,
-        options:
-        {
-          title: {
-            display: true,
-            text: chartTitle
-          },
+        var theChart = new Chart(document.getElementById("scatter-chart"), {
+            type: 'scatter',
+            data: series,
+            options: {
+                title: {
+                    display: true,
+                    text: chartTitle
+                },
 
-          legend: {
-            display: true,
-            labels: {
-                usePointStyle: true
+                legend: {
+                    display: true,
+                    labels: {
+                        usePointStyle: true,
+                        fontSize: 10
+                    }
+                },
+
+                scales: {
+                    yAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: yAxisTitle,
+                        },
+                        ticks: {
+                            //min: 0,
+                            //max: 100
+                        }
+                    }],
+
+                    xAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: xAxisTitle,
+                        },
+                        ticks: {
+                            //min: 0,
+                            //max: 100
+                        }
+                    }]
+                }
             }
-          },
+        });
 
-          scales: {
-            yAxes: [{
-              scaleLabel: {
-                display: true,
-                labelString: yAxisTitle,
-              },
-              ticks: {
-                    //min: 0,
-                    //max: 100
-              }
-            }],
-
-            xAxes: [{
-              scaleLabel: {
-                display: true,
-                labelString: xAxisTitle,
-              },
-              ticks: {
-                    //min: 0,
-                    //max: 100
-              }
-            }]
-          }
+        //Hide the legend if only 1 item
+        if (theChart.data.datasets.length <= 1) {
+            theChart.options.legend.display = false;
+            theChart.options.title.display = false;
         }
-      });
     }
     window.onload = load;
 

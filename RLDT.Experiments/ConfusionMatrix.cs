@@ -10,6 +10,7 @@ namespace RLDT.Experiments
         private HashSet<object> knownObjects = new HashSet<object>();
         private Dictionary<object, Dictionary<object, int>> Counts = new Dictionary<object, Dictionary<object, int>>();
         private int totalEntries = 0;
+        private int correctEntries = 0;
 
         //Properties
         public static string HtmlStyling
@@ -20,24 +21,35 @@ namespace RLDT.Experiments
                     <style>
                         table.confusionMatrix {
                             border-collapse: collapse;
+                            font-family: Arial, Helvetica, sans-serif;
                             --color-correct: 63,127,191;
                             --color-wrong: 191,127,63;
                         }
-                        table.confusionMatrix th, td {
-                            background-color: #eeeeee;
+                        table.confusionMatrix td {
                             border: 1px solid black;
+                            text-align: center;
                         }
                         table.confusionMatrix th {
-                            background-color: #999999;
+                            border:0px;
+                            text-align: center;
+                        }
+                        table.confusionMatrix td.title {
+                            border: 0px;
+                            background-color: transparent;
+                            font-size: x-small;
                         }
                         table.confusionMatrix td.correct {
                             background-color: rgb(0,0,100);
                         }
-                       table.confusionMatrix  td.wrong {
+                        table.confusionMatrix td.wrong {
                             background-color: #ffcc88;
                         }
-                        .hidden{
+                        table.confusionMatrix td.percentage {
+                            font-size: x-small;
+                        }
+                        table.confusionMatrix .hidden {
                             visibility: hidden;
+                            border: 0px;
                         }
                     </style>
                     ";
@@ -64,13 +76,26 @@ namespace RLDT.Experiments
             string html = "<table class='confusionMatrix'>";
             List<object> fields = new List<object>(knownObjects);
 
+            //Columns title (Predicted)
+            html += "<tr>";
+            html += "<td class='hidden'></td>";
+            html += "<td class='hidden'></td>";
+            html += String.Format("<td colspan='{0}' class='title'>Predicted</td>", knownObjects.Count); ;
+            html += "</tr>";
+
             //Create top headers
             html += "<tr>";
+            html += "<th class='hidden'></th>";
             html += "<th class='hidden'></th>";
             foreach (object column in fields)
                 html += "<th>" + column.ToString() + "</th>";
             html += "</tr>";
-            
+
+            //Rows title (Actual)
+            //html += "<tr>";
+            html += String.Format("<td rowspan='{0}' class='title'><span style='transform:rotate(180deg); writing-mode:vertical-rl;'>Actual</span></td>", knownObjects.Count+1); ;
+            //html += "</tr>";
+
             //Add rows of data
             foreach (object row in fields)
             {
@@ -115,14 +140,18 @@ namespace RLDT.Experiments
                     percentCorrect = (double) rowCorrect / rowTotal * 100;
                     percentWrong = (double) rowWrong / rowTotal * 100;
                 }
-                html += String.Format("<td class='correct' style='background-color: rgba(var(--color-correct), {1:N2})'>{0:N1}%</td>", percentCorrect, percentCorrect/100);
-                html += String.Format("<td class='wrong' style='background-color: rgba(var(--color-wrong), {1:N2})'>{0:N1}%</td>", percentWrong, percentWrong/100);
+                html += String.Format("<td class='correct percentage' style='background-color: rgba(var(--color-correct), {1:N2})'>{0:N1}%</td>", percentCorrect, percentCorrect/100);
+                html += String.Format("<td class='wrong percentage' style='background-color: rgba(var(--color-wrong), {1:N2})'>{0:N1}%</td>", percentWrong, percentWrong/100);
                 html += "</tr>";
             }
 
             //Add column summaries
-            string htmlRowCorrect = "<tr><th class='hidden'></th>";
-            string htmlRowWrong = "<tr><th class='hidden'></th>";
+            string htmlRowCorrect = "<tr>";
+            htmlRowCorrect +="<th class='hidden'></th>";
+            htmlRowCorrect +="<th class='hidden'></th>";
+            string htmlRowWrong = "<tr>";
+            htmlRowWrong +="<th class='hidden'></th>";
+            htmlRowWrong +="<th class='hidden'></th>";
             foreach (object column in fields)
             {
                 int colTotal = 0;
@@ -156,14 +185,21 @@ namespace RLDT.Experiments
                 }
 
                 //Add cells to html
-                htmlRowCorrect += String.Format("<td class='correct' style='background-color: rgba(var(--color-correct),{1:N1});'>{0:N2}%</td>", percentCorrect, percentCorrect/100);
-                htmlRowWrong += String.Format("<td class='wrong' style='background-color: rgba(var(--color-wrong),{1:N1});'>{0:N2}%</td>", percentWrong, percentWrong/100);
+                htmlRowCorrect += String.Format("<td class='correct percentage' style='background-color: rgba(var(--color-correct),{1:N1});'>{0:N1}%</td>", percentCorrect, percentCorrect/100);
+                htmlRowWrong += String.Format("<td class='wrong percentage' style='background-color: rgba(var(--color-wrong),{1:N1});'>{0:N1}%</td>", percentWrong, percentWrong/100);
             }
+           
+            //Add overall accuracy
+            double overallAccuracyPercent = (double) this.correctEntries / this.totalEntries * 100;
+            htmlRowCorrect += String.Format("<td class='correct percentage' style='background-color: rgba(var(--color-correct),{1:N1});'>{0:N1}%</td>", overallAccuracyPercent, overallAccuracyPercent/100);
+            
+            //Add summary rows
             htmlRowCorrect += "</tr>";
             htmlRowWrong += "</tr>";
             html += htmlRowCorrect;
             html += htmlRowWrong;
 
+            //Close table
             html += "</table>";
             return html;
         }
@@ -186,6 +222,10 @@ namespace RLDT.Experiments
 
             //Increase total count
             totalEntries++;
+
+            //Increase matching entries
+            if (correct.Equals(prediction))
+                correctEntries++;
         }
     }
 }

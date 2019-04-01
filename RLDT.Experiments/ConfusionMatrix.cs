@@ -13,6 +13,13 @@ namespace RLDT.Experiments
         private int correctEntries = 0;
 
         //Properties
+        public double Accuracy
+        {
+            get
+            {
+                return (double) correctEntries / totalEntries;
+            }
+        }
         public static string HtmlStyling
         {
             get

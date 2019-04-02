@@ -10,10 +10,9 @@ namespace RLDT.Experiments
     {
         //Fields
         private StreamReader file = null;
-        private string[] headers = null;
-        private double[] weights = null;
         private Dictionary<string,int> fieldNames = new Dictionary<string, int>(); //first line of csv file
         private Dictionary<string,int> fieldImportances = new Dictionary<string, int>(); //first line of csv file
+        public Dictionary<string,HashSet<object>> fieldUniqueValues = new Dictionary<string, HashSet<object>>(); //unique values seen for a field
         private int lineCounter = 0;
 
         //Constructor
@@ -42,10 +41,6 @@ namespace RLDT.Experiments
                 }
                     
             }
-            
-            //Create dictionary of headers with column location
-            //featureNames = headers.Where(p => p.ToLower().IndexOf(":importance") < 0).ToArray();
-            //weights = file.ReadLine().Split(',').Select(double.Parse).ToArray();
         }
 
         //Properties
@@ -56,6 +51,19 @@ namespace RLDT.Experiments
         public bool EndOfStream
         {
             get { return file.EndOfStream; }
+        }
+        public double FeatureSpaceSize
+        {
+            get
+            {
+                if (fieldUniqueValues.Count == 0)
+                    return 0;
+
+                double dimensionality = 1;
+                foreach (var feature in fieldUniqueValues)
+                    dimensionality *= feature.Value.Count;
+                return dimensionality;
+            }
         }
 
         //Methods
@@ -74,9 +82,15 @@ namespace RLDT.Experiments
             DataVector dv = new DataVector();
             foreach (var fieldNameKVP in fieldNames)
             {
+                //Add to the datavector
                 string name = fieldNameKVP.Key;
                 string value = dataobjects[fieldNameKVP.Value];
                 dv.AddFeature(name, value);
+
+                //Track seen key-value pairs (expect the class label)
+                if (!fieldUniqueValues.ContainsKey(name))
+                    fieldUniqueValues.Add(name, new HashSet<object>());
+                fieldUniqueValues[name].Add(value);
             }
             return dv;
         }
@@ -95,13 +109,28 @@ namespace RLDT.Experiments
             DataVectorTraining dvt = new DataVectorTraining();
             foreach(var fieldNameKVP in fieldNames)
             {
+                //Get feaure name and value
                 string name = fieldNameKVP.Key;
                 string value = dataobjects[fieldNameKVP.Value];
+
+                //Get importance value, if available
                 double importance = 0;
                 if (fieldImportances.ContainsKey(name))
                     double.TryParse(dataobjects[fieldImportances[name]], out importance);
+
+                //Add to the datavector
                 dvt.AddFeature(name, value, importance);
+
+                //Track seen key-value pairs (expect the class label)
+                if(name != labelFeatureName)
+                { 
+                    if (!fieldUniqueValues.ContainsKey(name))
+                            fieldUniqueValues.Add(name, new HashSet<object>());
+                    fieldUniqueValues[name].Add(value);
+                }
             }
+
+            //Set the label
             dvt.SetLabel(labelFeatureName, dvt[labelFeatureName].Value);
             return dvt;
         }

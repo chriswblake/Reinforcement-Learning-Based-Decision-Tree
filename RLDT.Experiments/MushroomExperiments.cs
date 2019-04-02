@@ -1,13 +1,10 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Linq;
-using System.Diagnostics;
-using Xunit;
-using OxyPlot;
-using OxyPlot.Axes;
-using OxyPlot.Series;
 using System.Data;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using Xunit;
 
 namespace RLDT.Experiments
 {
@@ -27,60 +24,70 @@ namespace RLDT.Experiments
         [InlineData("original", 80)]
         [InlineData("random", 80)]
         [InlineData("randomInversedLabel", 80)]
-        private string DataSets(string name, int percentage)
+        public string DataSets(string name, int percentage=100)
         {
             //Remove folder information and extension
             name = Path.GetFileNameWithoutExtension(name);
 
             //Check that source file is valid
-            string path = Path.Combine(ResultsDir, name);
-            Assert.True(File.Exists(path+".csv"));
+            string pathSource = Path.Combine(ResultsDir, name + ".csv");
+            Assert.True(File.Exists(pathSource));
 
-            //Check the percentages
-            Assert.InRange(percentage, 1, 99);
-            int percentTraining = percentage;
-            int percentTesting = Math.Abs(100 - percentage);
-            if (percentTesting > percentTraining)
-            {
-                percentTraining = percentTesting;
-                percentTesting = percentage;
-            }
+            //Default to source file
+            string pathReturn = pathSource;
 
-            //Sample the source CV file and create training and testing versions.
-            int lineCounter = 0;
-            if(!File.Exists(path+percentage+".csv") || !File.Exists(path+percentTesting+".csv"))
-            {
-                StreamReader sr = new StreamReader(path+".csv");
-                StreamWriter swTraining = new StreamWriter(path+percentTraining+".csv");
-                StreamWriter swTesting = new StreamWriter(path+percentTesting+".csv");
-                Random rand = new Random();
-
-                //Add headers
-                string headers = sr.ReadLine();
-                swTraining.WriteLine(headers);
-                swTesting.WriteLine(headers);
-
-                //Copy data over
-                while (!sr.EndOfStream)
+            //Check the percentages. return the requested sample
+            if (percentage > 0 && percentage < 100)
+            { 
+                int percentTraining = percentage;
+                int percentTesting = Math.Abs(100 - percentage);
+                if (percentTesting > percentTraining)
                 {
-                    string line = sr.ReadLine(); lineCounter++;
-                    if (rand.Next(0,101) <= percentage)
-                        swTraining.WriteLine(line);
-                    else
-                        swTesting.WriteLine(line);
+                    percentTraining = percentTesting;
+                    percentTesting = percentage;
                 }
 
-                sr.Close();
-                swTraining.Close();
-                swTesting.Close();
+                //Create samples folder, if not existing
+                string pathSamplesDir = Path.Combine(ResultsDir, "samples");
+                if (!Directory.Exists(pathSamplesDir))
+                    Directory.CreateDirectory(pathSamplesDir);
+
+                //Sample the source CV file and create training and testing versions.
+                int lineCounter = 0;
+                string pathTraining = Path.Combine(ResultsDir, "samples", name + "_"+ percentTraining + ".csv");
+                string pathTesting = Path.Combine(ResultsDir, "samples", name + "_" + percentTesting + ".csv");
+                if (!File.Exists(pathTraining) || !File.Exists(pathTesting))
+                {
+                    StreamReader sr = new StreamReader(pathSource);
+                    StreamWriter swTraining = new StreamWriter(pathTraining);
+                    StreamWriter swTesting = new StreamWriter(pathTesting);
+                    Random rand = new Random();
+
+                    //Add headers
+                    string headers = sr.ReadLine();
+                    swTraining.WriteLine(headers);
+                    swTesting.WriteLine(headers);
+
+                    //Copy data over
+                    while (!sr.EndOfStream)
+                    {
+                        string line = sr.ReadLine(); lineCounter++;
+                        if (rand.Next(0, 101) <= percentage)
+                            swTraining.WriteLine(line);
+                        else
+                            swTesting.WriteLine(line);
+                    }
+
+                    sr.Close();
+                    swTraining.Close();
+                    swTesting.Close();
+                }
+
+                //Provide the training or testing CSV path
+                pathReturn = Path.Combine(pathSamplesDir, name + "_" + percentage + ".csv");
             }
-            Assert.True(File.Exists(path+percentTraining+".csv"));
-            Assert.True(File.Exists(path+percentTesting+".csv"));
 
-            //Provide the training or testing CSV path
-            string pathRequest = Path.Combine(ResultsDir, name+percentage+".csv");
-
-            return pathRequest;
+            return pathReturn;
         }
 
         [Theory]
@@ -118,14 +125,15 @@ namespace RLDT.Experiments
             #endregion
 
             #region Policy configuration
-            Policy thePolicy = new Policy() {
+            Policy thePolicy = new Policy()
+            {
                 ExplorationRate = defaultExplorationRate,
                 DiscountFactor = defaultDiscountFactor,
                 ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
                 ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
                 QueriesLimit = defaultQueriesLimit,
-        };
-            
+            };
+
             #endregion
 
             #region Processing
@@ -157,7 +165,7 @@ namespace RLDT.Experiments
 
                     //Perform Testing
                     if (processedTotal % testingInterval == 0)
-                    { 
+                    {
                         //Submit to Tester
                         ConfusionMatrix confusionMatrix = new ConfusionMatrix();
                         Stopwatch stopwatchTesting = new Stopwatch();
@@ -192,7 +200,7 @@ namespace RLDT.Experiments
             string suffix = order;
 
             // Save to CSV file
-            results.ToCsv(Path.Combine(ResultsDir, "Data "+suffix+".csv"));
+            results.ToCsv(Path.Combine(ResultsDir, "Data " + suffix + ".csv"));
 
             #region Save chart to html and pdf
             //Create charts
@@ -236,11 +244,11 @@ namespace RLDT.Experiments
             }
             htmlConfusionMatrix += "</table>";
             htmlConfusionMatrix += "</html>";
-            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix "+suffix+".html"), htmlConfusionMatrix);
+            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix " + suffix + ".html"), htmlConfusionMatrix);
             #endregion
 
             #region Save metadata file
-            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details "+suffix+".txt"));
+            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details " + suffix + ".txt"));
             swMeta.WriteLine("# Training Configuration");
             swMeta.WriteLine("Training File: " + Path.GetFileName(trainingCsvPath));
             swMeta.WriteLine("Training File Path: " + trainingCsvPath);
@@ -265,8 +273,8 @@ namespace RLDT.Experiments
                 ShowBlanks = false,
                 ShowSubScores = false
             };
-            File.WriteAllText(Path.Combine(ResultsDir, "tree-full "+suffix+".html"), thePolicy.DecisionTree.ToHtmlTree());
-            File.WriteAllText(Path.Combine(ResultsDir, "tree-simple "+suffix+".html"), thePolicy.ToDecisionTree(ts_simple).ToHtmlTree());
+            File.WriteAllText(Path.Combine(ResultsDir, "tree-full " + suffix + ".html"), thePolicy.DecisionTree.ToHtmlTree());
+            File.WriteAllText(Path.Combine(ResultsDir, "tree-simple " + suffix + ".html"), thePolicy.ToDecisionTree(ts_simple).ToHtmlTree());
             #endregion
             #endregion
 
@@ -276,9 +284,9 @@ namespace RLDT.Experiments
         }
 
         [Theory]
-        [InlineData(new double[] {0.40, 0.45})]
-        [InlineData(new double[] {0.50, 0.55, 0.60, 0.65, 0.70, 0.75})]
-        [InlineData(new double[] {0.80, 0.85, 0.90, 0.95})]
+        [InlineData(new double[] { 0.40, 0.45 })]
+        [InlineData(new double[] { 0.50, 0.55, 0.60, 0.65, 0.70, 0.75 })]
+        [InlineData(new double[] { 0.80, 0.85, 0.90, 0.95 })]
         public void DiscountFactor(double[] discountFactors)
         {
             #region Result Storage
@@ -315,14 +323,14 @@ namespace RLDT.Experiments
             foreach (double discountFactor in discountFactors)
             {
                 //Policy Configuration
-                thePolicy = new Policy() {
+                thePolicy = new Policy()
+                {
                     ExplorationRate = defaultExplorationRate,
                     DiscountFactor = discountFactor,// defaultDiscountFactor;
                     ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
                     ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
                     QueriesLimit = defaultQueriesLimit,
-            };
-                
+                };
 
                 #region Training/Testing
                 int processedTotal = 0;
@@ -349,7 +357,7 @@ namespace RLDT.Experiments
                         result["Processed Total"] = processedTotal;
                         result["States Total"] = trainingStats.StatesTotal;
                         result["Training Time"] = stopwatchTraining.ElapsedMilliseconds;
-                        
+
                         //Perform testing
                         if (processedTotal % testingInterval == 0)
                         {
@@ -389,7 +397,7 @@ namespace RLDT.Experiments
             string suffix = string.Join("-", discountFactors.Select(p => p.ToString("N2"))).Replace("0.", "");
 
             // Save to CSV file
-            results.ToCsv(Path.Combine(ResultsDir, "Data "+suffix+".csv"));
+            results.ToCsv(Path.Combine(ResultsDir, "Data " + suffix + ".csv"));
 
             #region Save chart to html and pdf
             //Create charts
@@ -397,16 +405,16 @@ namespace RLDT.Experiments
             Chart chartAccuracy = new Chart("Accuracy vs Processed", "Processed", "% Correct");
 
             // Add data to chart
-            foreach(double discountFactor in discountFactors)
-            foreach (DataRow r in results.Rows.Cast<DataRow>().Where(p=>p["Discount Factor"].Equals(discountFactor)))
-            {
-                chartStates.Add(discountFactor.ToString("N2"), (int) r["Processed Total"], (int) r["States Total"]);
-                if(r["Testing Accuracy"] != DBNull.Value)
-                    chartAccuracy.Add(discountFactor.ToString("N2"), (int) r["Processed Total"], (double) r["Testing Accuracy"]);
-            }
+            foreach (double discountFactor in discountFactors)
+                foreach (DataRow r in results.Rows.Cast<DataRow>().Where(p => p["Discount Factor"].Equals(discountFactor)))
+                {
+                    chartStates.Add(discountFactor.ToString("N2"), (int)r["Processed Total"], (int)r["States Total"]);
+                    if (r["Testing Accuracy"] != DBNull.Value)
+                        chartAccuracy.Add(discountFactor.ToString("N2"), (int)r["Processed Total"], (double)r["Testing Accuracy"]);
+                }
 
             // Save charts
-            chartStates.ToHtml(Path.Combine(ResultsDir, "States "+ suffix));
+            chartStates.ToHtml(Path.Combine(ResultsDir, "States " + suffix));
             chartStates.ToPdf(Path.Combine(ResultsDir, "States " + suffix));
 
             chartAccuracy.ToHtml(Path.Combine(ResultsDir, "Accuracy " + suffix));
@@ -434,11 +442,11 @@ namespace RLDT.Experiments
             }
             htmlConfusionMatrix += "</table>";
             htmlConfusionMatrix += "</html>";
-            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix "+suffix+".html"), htmlConfusionMatrix);
+            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix " + suffix + ".html"), htmlConfusionMatrix);
             #endregion
 
             #region Save metadata file
-            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details "+suffix+".txt"));
+            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details " + suffix + ".txt"));
             swMeta.WriteLine("# Training Configuration");
             swMeta.WriteLine("Training File: " + Path.GetFileName(trainingCsvPath));
             swMeta.WriteLine("Training File Path: " + trainingCsvPath);
@@ -464,8 +472,8 @@ namespace RLDT.Experiments
         }
 
         [Theory]
-        [InlineData(new double[] {0.0, 0.01, 0.5 })]
-        [InlineData(new double[] {0.0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 })]
+        [InlineData(new double[] { 0.0, 0.01, 0.5 })]
+        [InlineData(new double[] { 0.0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 })]
         public void ExplorationRate(double[] explorationRates)
         {
             #region Result Storage
@@ -504,14 +512,15 @@ namespace RLDT.Experiments
             foreach (double explorationRate in explorationRates)
             {
                 //Policy Configuration
-                thePolicy = new Policy() {
+                thePolicy = new Policy()
+                {
                     ExplorationRate = explorationRate, //defaultExplorationRate;
                     DiscountFactor = defaultDiscountFactor,
                     ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
                     ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
                     QueriesLimit = defaultQueriesLimit,
-            };
-                
+                };
+
 
                 #region Training/Testing
                 int processedTotal = 0;
@@ -600,8 +609,8 @@ namespace RLDT.Experiments
                         chartAccuracy.Add(explorationRate.ToString("N2"), (int)r["Processed Total"], (double)r["Testing Accuracy"]);
                 }
                 chartStatesVsExpRate.Add("", (double)data.Last()["Exploration Rate"], (int)data.Last()["States Total"]);
-                chartQueriesVsExpRate.Add("Max", (double)data.Last()["Exploration Rate"], (int)data.Max(p=> (int) p["Queries Total"]));
-                chartQueriesVsExpRate.Add("Avg", (double)data.Last()["Exploration Rate"], (int)data.Average(p=> (int) p["Queries Total"]));
+                chartQueriesVsExpRate.Add("Max", (double)data.Last()["Exploration Rate"], (int)data.Max(p => (int)p["Queries Total"]));
+                chartQueriesVsExpRate.Add("Avg", (double)data.Last()["Exploration Rate"], (int)data.Average(p => (int)p["Queries Total"]));
             }
 
             // Save charts
@@ -640,7 +649,7 @@ namespace RLDT.Experiments
             }
             htmlConfusionMatrix += "</table>";
             htmlConfusionMatrix += "</html>";
-            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix "+suffix+".html"), htmlConfusionMatrix);
+            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix " + suffix + ".html"), htmlConfusionMatrix);
             #endregion
 
             #region Save metadata file
@@ -876,5 +885,136 @@ namespace RLDT.Experiments
             testingNormalData.Close();
         }
 
+        [Fact]
+        public void FeatureSpaceSize()
+        {
+            #region Result Storage
+            DataTable results = new DataTable();
+            results.Columns.Add("Feature Space Size", typeof(double));
+            results.Columns.Add("States Total", typeof(double));
+            results.Columns.Add("Training Time (ms)", typeof(double));
+            results.Columns.Add("Training Time (relative)", typeof(double));
+            #endregion
+
+            #region Datasets
+            //Training parameters
+            List<string> datasets = new List<string>() {
+                "random.csv",
+                "random1_featurespace_1.09E20.csv",
+                "random2_featurespace_1.05E30.csv",
+                "random3_featurespace_1.06E40.csv",
+                "random4_featurespace_1.06E50.csv",
+                "random5_featurespace_1.08E60.csv",
+                "random6_featurespace_1.03E70.csv",
+                "random7_featurespace_1.03E80.csv",
+                "random8_featurespace_1.04E90.csv",
+                "random9_featurespace_1.1E100.csv",
+            };
+            string trainingLabelName = "class";
+            int passes = 1;
+            #endregion
+
+            #region Processing
+            Stopwatch stopwatchProcessing = new Stopwatch(); stopwatchProcessing.Start();
+            Policy thePolicy = null;
+            foreach (string datasetName in datasets)
+            {
+                //Policy Configuration
+                thePolicy = new Policy()
+                {
+                    ExplorationRate = defaultExplorationRate,
+                    DiscountFactor = defaultDiscountFactor,
+                    ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
+                    ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
+                    QueriesLimit = defaultQueriesLimit,
+                };
+
+                //Perform Training
+                Stopwatch stopwatchTraining = new Stopwatch();
+                stopwatchTraining.Start();
+                CsvStreamReader trainingData = new CsvStreamReader(DataSets(datasetName));
+                for (int pass = 1; pass <= passes; pass++)
+                {
+                    //Cycle through each instance in the training file
+                    while (!trainingData.EndOfStream)
+                    {
+                        //Submit to Trainer
+                        DataVectorTraining instanceTraining = trainingData.ReadLine(trainingLabelName);
+                        thePolicy.Learn(instanceTraining);
+                    }
+
+                    //Reset training dataset
+                    trainingData.SeekOriginBegin();
+                }
+                trainingData.Close();
+                stopwatchTraining.Stop();
+
+                //Record training stats
+                DataRow result = results.NewRow();
+                results.Rows.Add(result);
+                result["Feature Space Size"] = trainingData.FeatureSpaceSize;
+                result["States Total"] = thePolicy.StateSpaceCount;
+                result["Training Time (ms)"] = stopwatchTraining.ElapsedMilliseconds;
+            }
+            stopwatchProcessing.Stop();
+            #endregion
+
+            #region Save Results
+            //Compute relative training times
+            double minTime = double.PositiveInfinity;
+            foreach (DataRow r in results.Rows)
+                if ((double)r["Training Time (ms)"] < minTime)
+                    minTime = (double)r["Training Time (ms)"];
+            foreach (DataRow r in results.Rows)
+                r["Training Time (relative)"] = (double)r["Training Time (ms)"] / minTime;
+
+            // Save to CSV file
+            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
+
+            #region Save chart to html and pdf
+            //Create charts
+            Chart chartStates = new Chart("States vs Feature Space", "Feature Space", "States") { xLogarithmic = true };
+            Chart chartTrainingTime = new Chart("Training Time (ms) vs Feature Space", "Feature Space", "Training Time (ms)") {xLogarithmic=true };
+            Chart chartTrainingTimeRelative = new Chart("Training Time (relative) vs Feature Space", "Feature Space", "Training Time (relative)") {xLogarithmic=true };
+
+            // Add data to chart
+            foreach (DataRow r in results.Rows)
+            {
+                chartStates.Add("States", (double) r["Feature Space Size"], (double)r["States Total"]);
+                chartTrainingTime.Add("Training Time (ms)", (double) r["Feature Space Size"], (double)r["Training Time (ms)"]);
+                chartTrainingTimeRelative.Add("Training Time (relative)", (double) r["Feature Space Size"], (double)r["Training Time (relative)"]);
+            }
+
+            // Save charts
+            chartStates.ToHtml(Path.Combine(ResultsDir, "States"));
+            chartStates.ToPdf(Path.Combine(ResultsDir, "States"));
+
+            chartTrainingTime.ToHtml(Path.Combine(ResultsDir, "Training Time (ms)"));
+            chartTrainingTime.ToPdf(Path.Combine(ResultsDir, "Training Time (ms)"));
+
+            chartTrainingTimeRelative.ToHtml(Path.Combine(ResultsDir, "Training Time (relative)"));
+            chartTrainingTimeRelative.ToPdf(Path.Combine(ResultsDir, "Training Time (relative)"));
+            #endregion
+
+            #region Save metadata file
+            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details.txt"));
+            swMeta.WriteLine("# Training Configuration");
+            swMeta.WriteLine("Training Files:");
+            foreach(string dataset in datasets)
+                swMeta.WriteLine("\t"+dataset);
+            swMeta.WriteLine("Total Processing Time (ms): " + stopwatchProcessing.ElapsedMilliseconds);
+            swMeta.WriteLine("Passes: " + passes);
+
+            swMeta.WriteLine();
+
+            swMeta.WriteLine("# Policy Configuration");
+            swMeta.WriteLine("Exploration Rate: " + thePolicy.ExplorationRate.ToString("N2"));
+            swMeta.WriteLine("Discount Factor: " + thePolicy.DiscountFactor.ToString("N2"));
+            swMeta.WriteLine("Parallel Query Updates: " + thePolicy.ParallelQueryUpdatesEnabled);
+            swMeta.WriteLine("Parallel Report Updates: " + thePolicy.ParallelReportUpdatesEnabled);
+            swMeta.Close();
+            #endregion
+            #endregion
+        }
     }
 }

@@ -73,6 +73,7 @@
 
                 scales: {
                     yAxes: [{
+                        type: yAxisType,
                         scaleLabel: {
                             display: true,
                             labelString: yAxisTitle,
@@ -84,6 +85,7 @@
                     }],
 
                     xAxes: [{
+                        type: xAxisType,
                         scaleLabel: {
                             display: true,
                             labelString: xAxisTitle,
@@ -109,6 +111,8 @@
     var chartTitle = "<chart title>";
     var xAxisTitle = "<x title>";
     var yAxisTitle = "<y title>"
+    var xAxisType = "<x type>";
+    var yAxisType = "<y type>";
     var pointSize = 2;
     var colors = colorTemplates.material19;
 

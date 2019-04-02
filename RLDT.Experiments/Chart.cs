@@ -32,6 +32,8 @@ namespace RLDT.Experiments
         public double? xMax { get; set; } = null;
         public double? yMin { get; set; } = null;
         public double? yMax { get; set; } = null;
+        public bool xLogarithmic { get; set; } = false;
+        public bool yLogarithmic { get; set; } = false;
 
         //Methods - Private
         private string ToDataset(string SeriesName)
@@ -97,6 +99,16 @@ namespace RLDT.Experiments
             chartHtml = chartHtml.Replace("<x title>", this.xAxisTitle);
             chartHtml = chartHtml.Replace("<y title>", this.yAxisTitle);
 
+            //Adjust axes type
+            if(this.xLogarithmic)
+                chartHtml = chartHtml.Replace("<x type>", "logarithmic");
+            else
+                chartHtml = chartHtml.Replace("<x type>", "linear");
+            if (this.yLogarithmic)
+                chartHtml = chartHtml.Replace("<y type>", "logarithmic");
+            else
+                chartHtml = chartHtml.Replace("<y type>", "linear");
+
             //Insert datasets
             string datasets = "";
             datasets += "datasets: [" + Environment.NewLine;
@@ -117,31 +129,43 @@ namespace RLDT.Experiments
                 PlotAreaBorderColor =OxyColor.FromArgb(25, 0, 0, 0),
             };
 
+
             //Configure X Axis
-            LinearAxis xAxis = new LinearAxis()
-            {
-                Title = this.xAxisTitle,
-                Position = AxisPosition.Bottom,
-                IsAxisVisible = true,
-                MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromArgb(25, 0, 0, 0)
-            };
+            Axis xAxis = null;
+            if (xLogarithmic)
+                xAxis = new LogarithmicAxis();
+            else
+                xAxis = new LinearAxis();
+            xAxis.Title = this.xAxisTitle;
+            xAxis.Position = AxisPosition.Bottom;
+            xAxis.IsAxisVisible = true;
+            xAxis.MajorGridlineStyle = LineStyle.Solid;
+            xAxis.MajorGridlineColor = OxyColor.FromArgb(25, 0, 0, 0);
             if (xMin.HasValue) xAxis.Minimum = xMin.Value;
             if (xMax.HasValue) xAxis.Maximum = xMax.Value;
             myModel.Axes.Add(xAxis);
 
             //Configure Y Axis
-            LinearAxis yAxis = new LinearAxis()
-            {
-                Title = this.yAxisTitle,
-                Position = AxisPosition.Left,
-                IsAxisVisible = true,
-                MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromArgb(25, 0, 0, 0)
-            };
+            Axis yAxis = null;
+            if (yLogarithmic)
+                yAxis = new LogarithmicAxis();
+            else
+                yAxis = new LinearAxis();
+            yAxis.Title = this.yAxisTitle;
+            yAxis.Position = AxisPosition.Left;
+            yAxis.IsAxisVisible = true;
+            yAxis.MajorGridlineStyle = LineStyle.Solid;
+            yAxis.MajorGridlineColor = OxyColor.FromArgb(25, 0, 0, 0);
             if (yMin.HasValue) yAxis.Minimum = yMin.Value;
             if (yMax.HasValue) yAxis.Maximum = yMax.Value;
             myModel.Axes.Add(yAxis);
+
+            //Hide legend if only 1 series
+            if (chartSeriesData.Count < 2)
+            { 
+                myModel.IsLegendVisible = false;
+                myModel.Title = "";
+            }
 
             //Create series
             foreach (var seriesData in chartSeriesData)

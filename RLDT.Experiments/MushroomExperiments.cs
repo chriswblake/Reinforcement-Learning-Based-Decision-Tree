@@ -87,6 +87,7 @@ namespace RLDT.Experiments
                 pathReturn = Path.Combine(pathSamplesDir, name + "_" + percentage + ".csv");
             }
 
+            Assert.True(File.Exists(pathReturn));
             return pathReturn;
         }
 

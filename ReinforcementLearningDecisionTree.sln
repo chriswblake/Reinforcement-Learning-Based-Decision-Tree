@@ -13,8 +13,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi", "WebApi\WebApi.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiConsoleTester", "WebApiConsoleTester\WebApiConsoleTester.csproj", "{079BDB81-AD77-418B-9A35-B60CDFD285E8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataSets", "DataSets\DataSets.csproj", "{3640DD02-CDB1-423F-AF15-AD0EB6C1EDBF}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RLDT.Tests", "RLDT.Tests\RLDT.Tests.csproj", "{5D203557-F05D-4278-BAC8-0C5DEC6F7655}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RLDT.Experiments", "RLDT.Experiments\RLDT.Experiments.csproj", "{A8A3B47F-4771-4312-BD7D-37701A072DC8}"

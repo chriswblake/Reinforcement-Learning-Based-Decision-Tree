@@ -22,6 +22,10 @@ namespace RLDT.Tests
         }
         #endregion
 
+        /// <summary>
+        /// Several or all of the below methods have been set to fail testing.
+        /// This is on purpose as a reminder to write the tests at some point.
+        /// </summary>
         #region Methods
         [Fact]
         public void AddFeature()

@@ -30,9 +30,11 @@ namespace Xunit
         {
             get
             {
-                //Get path components
-                string basePath = Path.GetFullPath(@"..\..\..\Experiments\"); //moves up from bin directory
-                string className = GetClassName(); //retrieves name of class file
+                //Moves up from bin directory
+                string basePath = Path.GetFullPath(Path.Combine("..", "..", "..", "Experiments"));
+
+                //Retrieves name of class file
+                string className = GetClassName();
 
                 //Find the stack position for this "get"
                 int stackPos = -1;

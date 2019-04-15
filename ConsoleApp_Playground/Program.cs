@@ -12,9 +12,9 @@ namespace ConsoleApp_Playground
         static void Main(string[] args)
         {
             //Console.WriteLine("Hello World!");
-            Policy thePolicy = new Policy(0.01);
+            Policy thePolicy = new Policy();
 
-            for (int pass = 1; pass <= 50; pass++)
+            for (int pass = 1; pass <= 3; pass++)
             {
                 TrainFromCSV(thePolicy, "class", @"mushrooms.csv", 500);
 
@@ -49,10 +49,10 @@ namespace ConsoleApp_Playground
                 string[] dataobjects = line.Split(',');
 
                 //Create a data vector from the headers and read data line
-                TrainingDataVector dataVector = new TrainingDataVector(headers, dataobjects, rewards, labelFeaturName);
+                DataVectorTraining dataVector = new DataVectorTraining(headers, dataobjects, rewards, labelFeaturName);
                 
                 //Submit to the reinforcement learner
-                thePolicy.Learn(dataVector, labelFeaturName);
+                thePolicy.Learn(dataVector);
 
                 //If limit reached, end early
                 if (counter == readLimit) break;

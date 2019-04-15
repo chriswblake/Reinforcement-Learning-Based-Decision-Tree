@@ -5,8 +5,6 @@ VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp_Playground", "ConsoleApp_Playground\ConsoleApp_Playground.csproj", "{9F974C48-8E4E-43F8-BB7D-351AD4263B89}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphicalInterface", "GraphicalInterface\GraphicalInterface.csproj", "{529B923A-C58D-41C2-9CEC-7AFF54A1EAEF}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RLDT", "RLDT\RLDT.csproj", "{F9EA0537-A2E1-4910-AD58-2995B55A8D89}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi", "WebApi\WebApi.csproj", "{54E03337-83DC-4691-ACED-383A9B1F3739}"

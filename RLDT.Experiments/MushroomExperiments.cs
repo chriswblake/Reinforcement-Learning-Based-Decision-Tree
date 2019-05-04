@@ -1017,5 +1017,29 @@ namespace RLDT.Experiments
             #endregion
             #endregion
         }
+    
+        [Fact]
+        public void SpeedComparison()
+        {
+            //The  MDP vs the summarized Tree
+        }
+
+        [Fact]
+        public void FeatureReplacement()
+        {
+            //Inserting a new feature half-way through and changing the weights to simulate sensor obsoletion.
+        }
+
+        [Fact]
+        public void PartialDatavectors()
+        {
+            //Track the accuracy when using partial datavectors. i.e. a datavector may arrive with some of the expected features missing.
+        }
+
+        [Fact]
+        public void Overfitting()
+        {
+            //Track the training accuracy and testing accuracy while training.
+        }
     }
 }

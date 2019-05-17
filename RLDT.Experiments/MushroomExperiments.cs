@@ -1017,9 +1017,15 @@ namespace RLDT.Experiments
             #endregion
             #endregion
         }
-    
+
         [Fact]
         public void SpeedComparison()
+        {
+            //The  MDP vs the summarized Tree
+        }
+
+        [Fact]
+        public void AccuracyComparison()
         {
             //The  MDP vs the summarized Tree
         }

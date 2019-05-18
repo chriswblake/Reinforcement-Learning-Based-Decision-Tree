@@ -31,7 +31,7 @@ namespace RLDT
         /// <summary>
         /// All of the possible states that have been explored. All states are stored using their hashcode, to avoid enumerating a list.
         /// </summary>
-        private Dictionary<int, State> StateSpace = new Dictionary<int, State>();
+        public Dictionary<int, State> StateSpace = new Dictionary<int, State>();
 
         /// <summary>
         /// Provides the count of the states included in the policy.

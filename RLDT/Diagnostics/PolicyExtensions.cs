@@ -10,6 +10,9 @@ namespace RLDT.Diagnostics
     {
         public static string delimeter = ",";
 
+        /// <summary>
+        /// Returns a string of plain-text with policy and summarized state information.
+        /// </summary>
         public static string DiagnosticInfo(this Policy thePolicy)
         {
             StringBuilder s = new StringBuilder();
@@ -42,6 +45,9 @@ namespace RLDT.Diagnostics
             return s.ToString();
         }
 
+        /// <summary>
+        /// Returns an HTML formatted string with policy and detailed state information.
+        /// </summary>
         public static string DiagnosticHtml(this Policy thePolicy)
         {
             StringBuilder s = new StringBuilder();
@@ -107,20 +113,8 @@ namespace RLDT.Diagnostics
             s.AppendLine("</body>");
             s.AppendLine("</html>");
 
-
-            //s.AppendLine("#### Policy ####");
-            //s.AppendFormat("States: {0:F0}", thePolicy.StateSpaceCount).AppendLine();
-            //s.AppendFormat("Exploration Rate: {0:F3}", thePolicy.ExplorationRate).AppendLine();
-            //s.AppendFormat("Discount Factor: {0:F3}", thePolicy.DiscountFactor).AppendLine();
-            //s.AppendFormat("Parallel Report Updates: {0}", thePolicy.ParallelReportUpdatesEnabled).AppendLine();
-            //s.AppendFormat("Parallel Query Updates: {0}", thePolicy.ParallelQueryUpdatesEnabled).AppendLine();
-            //s.AppendFormat("Queries Limit: {0:F0}", thePolicy.QueriesLimit).AppendLine();
-
-            //s.AppendLine();
-
             return s.ToString();
         }
-
 
     }
 }

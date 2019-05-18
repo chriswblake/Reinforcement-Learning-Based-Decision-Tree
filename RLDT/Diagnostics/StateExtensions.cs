@@ -10,6 +10,9 @@ namespace RLDT.Diagnostics
     {
         public static string delimeter = ",";
 
+        /// <summary>
+        /// Returns a string of plain-text with detailed state information.
+        /// </summary>
         public static string DiagnosticInfo(this State theState)
         {
             StringBuilder s = new StringBuilder();
@@ -68,10 +71,12 @@ namespace RLDT.Diagnostics
 
             s.AppendLine();
 
-
             return s.ToString();
         }
 
+        /// <summary>
+        /// Returns an HTML formatted string with detailed state information.
+        /// </summary>
         public static string DiagnosticHtml(this State theState)
         {
             StringBuilder s = new StringBuilder();
@@ -203,7 +208,6 @@ namespace RLDT.Diagnostics
 
             //Back Matter
             s.AppendLine("</div>");
-
 
             return s.ToString();
         }

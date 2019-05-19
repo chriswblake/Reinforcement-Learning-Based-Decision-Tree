@@ -1021,7 +1021,179 @@ namespace RLDT.Experiments
         [Fact]
         public void SpeedComparison()
         {
-            //The  MDP vs the summarized Tree
+            #region Result Storage
+            DataTable results = new DataTable();
+            results.Columns.Add("Id", typeof(int));
+            results.Columns.Add("States Total", typeof(int));
+            results.Columns.Add("Processed Total", typeof(int));
+            results.Columns.Add("MDP Min Classification Time", typeof(double));
+            results.Columns.Add("MDP Avg Classification Time", typeof(double));
+            results.Columns.Add("MDP Max Classification Time", typeof(double));
+            results.Columns.Add("Tree Min Classification Time", typeof(double));
+            results.Columns.Add("Tree Avg Classification Time", typeof(double));
+            results.Columns.Add("Tree Max Classification Time", typeof(double));
+            #endregion
+
+            #region Datasets
+            string datasetName = "random.csv";
+            //Training parameters
+            string trainingCsvPath = DataSets(datasetName, defaultDatasetTrainingPercentage);
+            CsvStreamReader trainingData = new CsvStreamReader(trainingCsvPath);
+            string trainingLabelName = "class";
+            int passes = 1;
+
+            //Testing Parameters
+            string testingCsvPath = DataSets(datasetName, defaultDatasetTestingPercentage);
+            CsvStreamReader testingData = new CsvStreamReader(testingCsvPath);
+            string testingLabelName = "class";
+            int testingInterval = defaultTestingInterval; //50
+            #endregion
+
+            #region Policy configuration
+            Policy thePolicy = new Policy()
+            {
+                ExplorationRate = defaultExplorationRate,
+                DiscountFactor = defaultDiscountFactor,
+                ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
+                ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
+                QueriesLimit = defaultQueriesLimit,
+            };
+
+            #endregion
+
+            #region Processing
+            Stopwatch stopwatchProcessing = new Stopwatch(); stopwatchProcessing.Start();
+            int processedTotal = 0;
+            for (int pass = 1; pass <= passes; pass++)
+            {
+                //Cycle through each instance in the training file
+                while (!trainingData.EndOfStream)
+                {
+                    //Submit to Trainer
+                    Stopwatch stopwatchTraining = new Stopwatch();
+                    stopwatchTraining.Start();
+                    DataVectorTraining instanceTraining = trainingData.ReadLine(trainingLabelName);
+                    TrainingStats trainingStats = thePolicy.Learn(instanceTraining);
+                    processedTotal++;
+                    stopwatchTraining.Stop();
+
+                    //Perform Testing
+                    if (processedTotal % testingInterval == 0)
+                    {
+                        //Submit to Tester
+                        List<double> timesMDP = new List<double>();
+                        List<double> timesTree = new List<double>();
+                        Stopwatch stopwatchMDP = new Stopwatch(); 
+                        Stopwatch stopwatchTree = new Stopwatch();
+                        while (!testingData.EndOfStream)
+                        {
+                            DataVectorTraining instanceTesting = testingData.ReadLine(testingLabelName);
+
+                            //Classify with MDP
+                            stopwatchMDP.Start();
+                            thePolicy.Classify_ByPolicy(instanceTesting);
+                            stopwatchMDP.Stop();
+                            timesMDP.Add(stopwatchMDP.Elapsed.TotalMilliseconds);
+
+                            //Classify with Tree
+                            stopwatchTree.Start();
+                            thePolicy.Classify_ByTree(instanceTesting);
+                            stopwatchTree.Stop();
+                            timesTree.Add(stopwatchTree.Elapsed.TotalMilliseconds);
+                        }
+                        testingData.SeekOriginBegin();
+
+                        //Record testing stats
+                        DataRow result = results.NewRow();
+                        results.Rows.Add(result);
+                        result["Id"] = results.Rows.Count;
+                        result["States Total"] = trainingStats.StatesTotal;
+                        result["Processed Total"] = processedTotal;
+                        result["MDP Min Classification Time"] = timesMDP.Min();
+                        result["MDP Avg Classification Time"] = timesMDP.Average();
+                        result["MDP Max Classification Time"] = timesMDP.Max();
+                        result["Tree Min Classification Time"] = timesTree.Min();
+                        result["Tree Avg Classification Time"] = timesTree.Average();
+                        result["Tree Max Classification Time"] = timesTree.Max();
+                    }
+                }
+
+                //Reset training dataset
+                trainingData.SeekOriginBegin();
+            }
+            stopwatchProcessing.Stop();
+            #endregion
+
+            #region Save Results
+            // Save to CSV file
+            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
+
+            #region Save chart to html and pdf
+            //Create charts
+            Chart chartStates = new Chart("States vs Processed", "Processed", "States");
+            Chart chartTimeVsStatesMDP = new Chart("Time vs States", "States", "Classification Time (ms)");
+            Chart chartTimeVsStatesTree = new Chart("Time vs States", "States", "Classification Time (ms)");
+
+            //Add data to chart
+            foreach (DataRow r in results.Rows)
+            {
+                chartStates.Add("States", (int)r["Processed Total"], (int)r["States Total"]);
+                if (r["MDP Min Classification Time"] != DBNull.Value)
+                { 
+                    chartTimeVsStatesMDP.Add("MDP Min", (int)r["States Total"], (double)r["MDP Min Classification Time"]);
+                    chartTimeVsStatesMDP.Add("MDP Avg", (int)r["States Total"], (double)r["MDP Avg Classification Time"]);
+                    chartTimeVsStatesMDP.Add("MDP Max", (int)r["States Total"], (double)r["MDP Max Classification Time"]);
+                    chartTimeVsStatesTree.Add("Tree Min", (int)r["States Total"], (double)r["Tree Min Classification Time"]);
+                    chartTimeVsStatesTree.Add("Tree Avg", (int)r["States Total"], (double)r["Tree Avg Classification Time"]);
+                    chartTimeVsStatesTree.Add("Tree Max", (int)r["States Total"], (double)r["Tree Max Classification Time"]);
+                }
+            }
+
+            //Save charts
+            chartStates.ToHtml(Path.Combine(ResultsDir, "States"));
+            chartStates.ToPdf(Path.Combine(ResultsDir, "States"));
+
+            chartTimeVsStatesMDP.ToHtml(Path.Combine(ResultsDir, "MDP Times"));
+            chartTimeVsStatesMDP.ToPdf(Path.Combine(ResultsDir, "MDP Times"));
+
+            chartTimeVsStatesTree.ToHtml(Path.Combine(ResultsDir, "Tree Times"));
+            chartTimeVsStatesTree.ToPdf(Path.Combine(ResultsDir, "Tree Times"));
+            #endregion
+
+            #region Save metadata file
+            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details.txt"));
+            swMeta.WriteLine("# Training Configuration");
+            swMeta.WriteLine("Training File: " + Path.GetFileName(trainingCsvPath));
+            swMeta.WriteLine("Training File Path: " + trainingCsvPath);
+            swMeta.WriteLine("Testing File: " + Path.GetFileName(testingCsvPath));
+            swMeta.WriteLine("Testing File Path: " + testingCsvPath);
+            swMeta.WriteLine("Total Processing Time (ms): " + stopwatchProcessing.ElapsedMilliseconds);
+            swMeta.WriteLine("Passes: " + passes);
+
+            swMeta.WriteLine();
+
+            swMeta.WriteLine("# Policy Configuration");
+            swMeta.WriteLine("Exploration Rate: " + thePolicy.ExplorationRate.ToString("N2"));
+            swMeta.WriteLine("Discount Factor: " + thePolicy.DiscountFactor);
+            swMeta.WriteLine("Parallel Query Updates: " + thePolicy.ParallelQueryUpdatesEnabled);
+            swMeta.WriteLine("Parallel Report Updates: " + thePolicy.ParallelReportUpdatesEnabled);
+            swMeta.Close();
+            #endregion
+
+            #region Save decision tree (as HTML)
+            DecisionTree.TreeSettings ts_simple = new DecisionTree.TreeSettings()
+            {
+                ShowBlanks = false,
+                ShowSubScores = false
+            };
+            File.WriteAllText(Path.Combine(ResultsDir, "tree-full.html"), thePolicy.DecisionTree.ToHtmlTree());
+            File.WriteAllText(Path.Combine(ResultsDir, "tree-simple.html"), thePolicy.ToDecisionTree(ts_simple).ToHtmlTree());
+            #endregion
+            #endregion
+
+            //Close datasets
+            trainingData.Close();
+            testingData.Close();
         }
 
         [Fact]

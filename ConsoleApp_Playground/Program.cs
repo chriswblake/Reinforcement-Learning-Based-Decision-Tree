@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using RLDT;
-using Newtonsoft.Json;
+using RLDT.Diagnostics;
+
 
 namespace ConsoleApp_Playground
 {
@@ -11,17 +13,31 @@ namespace ConsoleApp_Playground
         //Main
         static void Main(string[] args)
         {
-            //Console.WriteLine("Hello World!");
-            Policy thePolicy = new Policy();
-
-            for (int pass = 1; pass <= 3; pass++)
+            bool repeat = true;
+            while (repeat==true)
             {
-                TrainFromCSV(thePolicy, "class", @"mushrooms.csv", 500);
+                //Create the policy
+                Console.WriteLine("Creating policy...");
+                Policy thePolicy = new Policy();
 
-                Console.WriteLine("Pass: " + pass);
+                //Train the policy
+                for (int pass = 1; pass <= 3; pass++)
+                {
+                    TrainFromCSV(thePolicy, "class", @"mushrooms.csv", 500);
+                    Console.WriteLine("Pass: " + pass);
+                }
+
+                //Print Diagnostic info
+                File.WriteAllText("Policy Diagnostics.html", thePolicy.DiagnosticHtml());
+                //File.WriteAllText("State Diagnostics.txt", thePolicy.StateSpace.Values.ElementAt(5).DiagnosticInfo());
+
+                //Ask about repeating
+                Console.WriteLine();
+                Console.Write("Repeat? (y/n):");
+                string ans = Console.ReadLine();
+                if (ans.StartsWith("n"))
+                    repeat = false;
             }
-
-            Console.ReadLine();
         }
 
         //Read data, line by line. Simulate data coming in 1 item at a time.

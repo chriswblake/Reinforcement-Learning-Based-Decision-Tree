@@ -1045,6 +1045,202 @@ namespace RLDT.Experiments
         [Fact]
         public void Overfitting()
         {
+            #region Result Storage
+            DataTable results = new DataTable();
+            results.Columns.Add("Id", typeof(int));
+            results.Columns.Add("Pass", typeof(int));
+            results.Columns.Add("Instance Id", typeof(int));
+            results.Columns.Add("Processed Total", typeof(int));
+            results.Columns.Add("States Total", typeof(int));
+            results.Columns.Add("Training Time", typeof(long));
+            results.Columns.Add("Training Accuracy", typeof(double));
+            results.Columns.Add("Training Accuracy Time", typeof(long));
+            results.Columns.Add("Testing Accuracy", typeof(double));
+            results.Columns.Add("Testing Accuracy Time", typeof(long));
+            #endregion
+
+            #region Datasets
+            string datasetName = "random.csv";
+
+            //Training parameters
+            string trainingCsvPath = DataSets(datasetName, defaultDatasetTrainingPercentage);
+            CsvStreamReader trainingData = new CsvStreamReader(trainingCsvPath);
+            string trainingLabelName = "class";
+            int passes = 1;
+
+            //Testing Parameters
+            string testingCsvPath = DataSets(datasetName, defaultDatasetTestingPercentage);
+            CsvStreamReader testingData = new CsvStreamReader(testingCsvPath);
+            string testingLabelName = "class";
+            int testingInterval = defaultTestingInterval;
+            #endregion
+
+            #region Policy configuration
+            Policy thePolicy = new Policy()
+            {
+                ExplorationRate = defaultExplorationRate,
+                DiscountFactor = defaultDiscountFactor,
+                ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
+                ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
+                QueriesLimit = defaultQueriesLimit,
+            };
+            #endregion
+
+            #region Processing
+            Stopwatch stopwatchProcessing = new Stopwatch(); stopwatchProcessing.Start();
+            int processedTotal = 0;
+            for (int pass = 1; pass <= passes; pass++)
+            {
+                //Cycle through each instance in the training file
+                while (!trainingData.EndOfStream)
+                {
+                    //Submit to Trainer
+                    Stopwatch stopwatchTraining = new Stopwatch();
+                    stopwatchTraining.Start();
+                    DataVectorTraining instanceTraining = trainingData.ReadLine(trainingLabelName);
+                    TrainingStats trainingStats = thePolicy.Learn(instanceTraining);
+                    processedTotal++;
+                    stopwatchTraining.Stop();
+
+                    //Record training stats
+                    DataRow result = results.NewRow();
+                    results.Rows.Add(result);
+                    result["Id"] = results.Rows.Count;
+                    result["Pass"] = pass;
+                    result["Instance Id"] = trainingData.LineNumber;
+                    result["Processed Total"] = processedTotal;
+                    result["States Total"] = trainingStats.StatesTotal;
+                    result["Training Time"] = stopwatchTraining.ElapsedMilliseconds;
+
+                    //Calculate Accuracy - Training Dataset
+                    if (processedTotal % testingInterval == 0)
+                    {
+                        //Record current position of training file
+                        int trainingPos = trainingData.LineNumber;
+
+                        //Submit to classifier
+                        ConfusionMatrix confusionMatrix = new ConfusionMatrix();
+                        Stopwatch stopwatchAccuracy = new Stopwatch();
+                        stopwatchAccuracy.Start();
+                        while (!trainingData.EndOfStream)
+                        {
+                            DataVectorTraining instanceTesting = trainingData.ReadLine(testingLabelName);
+                            //Get values to compare
+                            object prediction = thePolicy.DecisionTree.Classify(instanceTesting);
+                            object correctAnswer = instanceTesting.Label.Value;
+
+                            //Build Confusion matrix
+                            confusionMatrix.AddEntry(correctAnswer, prediction);
+                        }
+                        stopwatchAccuracy.Stop();
+
+                        //Return to original position in training file
+                        trainingData.SeekOriginBegin();
+                        for (int i = 0; i < trainingPos; i++)
+                            trainingData.ReadLine();
+
+                        //Record testing stats
+                        result["Training Accuracy"] = confusionMatrix.Accuracy;
+                        result["Training Accuracy Time"] = stopwatchAccuracy.ElapsedMilliseconds;
+                    }
+
+                    //Calculate Accuracy - Testing Dataset
+                    if (processedTotal % testingInterval == 0)
+                    {
+                        //Submit to Tester
+                        ConfusionMatrix confusionMatrix = new ConfusionMatrix();
+                        Stopwatch stopwatchTesting = new Stopwatch();
+                        stopwatchTesting.Start();
+                        while (!testingData.EndOfStream)
+                        {
+                            DataVectorTraining instanceTesting = testingData.ReadLine(testingLabelName);
+                            //Get values to compare
+                            object prediction = thePolicy.DecisionTree.Classify(instanceTesting);
+                            object correctAnswer = instanceTesting.Label.Value;
+
+                            //Build Confusion matrix
+                            confusionMatrix.AddEntry(correctAnswer, prediction);
+                        }
+                        stopwatchTesting.Stop();
+                        testingData.SeekOriginBegin();
+
+                        //Record testing stats
+                        result["Testing Accuracy"] = confusionMatrix.Accuracy;
+                        result["Testing Accuracy Time"] = stopwatchTesting.ElapsedMilliseconds;
+                    }
+                }
+
+                //Reset training dataset
+                trainingData.SeekOriginBegin();
+            }
+            stopwatchProcessing.Stop();
+            #endregion
+
+            #region Save Results
+            // Save to CSV file
+            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
+
+            #region Save chart to html and pdf
+            //Create charts
+            Chart chartStates = new Chart("States vs Processed", "Processed", "States");
+            Chart chartTrainingAccuracy = new Chart("Accuracy vs Processed", "Processed", "% Correct");
+            Chart chartTestingAccuracy = new Chart("Accuracy vs Processed", "Processed", "% Correct");
+
+            //Add data to chart
+            foreach (DataRow r in results.Rows)
+            {
+                chartStates.Add("States", (int)r["Processed Total"], (int)r["States Total"]);
+                if (r["Training Accuracy"] != DBNull.Value)
+                    chartTrainingAccuracy.Add("Accuracy", (int)r["Processed Total"], (double)r["Training Accuracy"]);
+                if (r["Testing Accuracy"] != DBNull.Value)
+                    chartTestingAccuracy.Add("Accuracy", (int)r["Processed Total"], (double)r["Testing Accuracy"]);
+            }
+
+            //Save charts
+            chartStates.ToHtml(Path.Combine(ResultsDir, "States"));
+            chartStates.ToPdf(Path.Combine(ResultsDir, "States"));
+
+            chartTrainingAccuracy.ToHtml(Path.Combine(ResultsDir, "Training Accuracy"));
+            chartTrainingAccuracy.ToPdf(Path.Combine(ResultsDir, "Training Accuracy"));
+
+            chartTestingAccuracy.ToHtml(Path.Combine(ResultsDir, "Testing Accuracy"));
+            chartTestingAccuracy.ToPdf(Path.Combine(ResultsDir, "Testing Accuracy"));
+            #endregion
+
+            #region Save metadata file
+            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details.txt"));
+            swMeta.WriteLine("# Training Configuration");
+            swMeta.WriteLine("Training File: " + Path.GetFileName(trainingCsvPath));
+            swMeta.WriteLine("Training File Path: " + trainingCsvPath);
+            swMeta.WriteLine("Testing File: " + Path.GetFileName(testingCsvPath));
+            swMeta.WriteLine("Testing File Path: " + testingCsvPath);
+            swMeta.WriteLine("Total Processing Time (ms): " + stopwatchProcessing.ElapsedMilliseconds);
+            swMeta.WriteLine("Passes: " + passes);
+
+            swMeta.WriteLine();
+
+            swMeta.WriteLine("# Policy Configuration");
+            swMeta.WriteLine("Exploration Rate: " + thePolicy.ExplorationRate.ToString("N2"));
+            swMeta.WriteLine("Discount Factor: " + thePolicy.DiscountFactor);
+            swMeta.WriteLine("Parallel Query Updates: " + thePolicy.ParallelQueryUpdatesEnabled);
+            swMeta.WriteLine("Parallel Report Updates: " + thePolicy.ParallelReportUpdatesEnabled);
+            swMeta.Close();
+            #endregion
+
+            #region Save decision tree (as HTML)
+            DecisionTree.TreeSettings ts_simple = new DecisionTree.TreeSettings()
+            {
+                ShowBlanks = false,
+                ShowSubScores = false
+            };
+            File.WriteAllText(Path.Combine(ResultsDir, "tree-full.html"), thePolicy.DecisionTree.ToHtmlTree());
+            File.WriteAllText(Path.Combine(ResultsDir, "tree-simple.html"), thePolicy.ToDecisionTree(ts_simple).ToHtmlTree());
+            #endregion
+            #endregion
+
+            //Close datasets
+            trainingData.Close();
+            testingData.Close();
             //Track the training accuracy and testing accuracy while training.
         }
     }

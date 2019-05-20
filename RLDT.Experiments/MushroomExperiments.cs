@@ -1204,8 +1204,8 @@ namespace RLDT.Experiments
 
         [Theory]
         [InlineData(0, new object[] {new object[]{"odor", -1 }})]
-        //[InlineData(0, new object[] {new object[]{ "veil-color", -1 }})]
-        //[InlineData(0, new object[] { new object[]{"odor", -1 }, new object[]{ "veil-color", -1 }})]
+        [InlineData(0, new object[] {new object[]{ "veil-color", -1 }})]
+        [InlineData(0, new object[] { new object[]{"odor", -1 }, new object[]{ "veil-color", -1 }})]
         public void FeatureImportance(int dummy, object[] featureImportances)
         {
             //Inserting a new feature half-way through and changing the weights to simulate sensor obsoletion.
@@ -1255,7 +1255,7 @@ namespace RLDT.Experiments
             #region Processing
             Stopwatch stopwatchProcessing = new Stopwatch(); stopwatchProcessing.Start();
             int processedTotal = 0;
-            int passes = 1;
+            int passes = 9;
             for (int pass = 1; pass <= passes; pass++)
             {
                 //Cycle through each instance in the training file

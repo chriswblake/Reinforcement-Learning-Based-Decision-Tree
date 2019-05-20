@@ -6,6 +6,6 @@ RLDT.Experiments/Experiments/Mushrooms/ExplorationRate
 RLDT.Experiments/Experiments/Mushrooms/Drifting
 RLDT.Experiments/Experiments/Mushrooms/FeatureSpaceSize
 RLDT.Experiments/Experiments/Mushrooms/SpeedComparison
-RLDT.Experiments/Experiments/Mushrooms/FeatureReplacement
+RLDT.Experiments/Experiments/Mushrooms/FeatureImportance
 RLDT.Experiments/Experiments/Mushrooms/PartialDatavectors
 RLDT.Experiments/Experiments/Mushrooms/Overfitting

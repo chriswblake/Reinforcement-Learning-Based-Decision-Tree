@@ -1202,10 +1202,234 @@ namespace RLDT.Experiments
             //The  MDP vs the summarized Tree
         }
 
-        [Fact]
-        public void FeatureReplacement()
+        [Theory]
+        [InlineData(0, new object[] {new object[]{"odor", -1 }})]
+        [InlineData(0, new object[] {new object[]{ "veil-color", -1 }})]
+        [InlineData(0, new object[] { new object[]{"odor", -1 }, new object[]{ "veil-color", -1 }})]
+        public void FeatureImportance(int dummy, object[] featureImportances)
         {
             //Inserting a new feature half-way through and changing the weights to simulate sensor obsoletion.
+            string datasetName = "random.csv";
+            string order = Path.GetFileNameWithoutExtension(datasetName);
+
+            #region Result Storage
+            DataTable results = new DataTable();
+            results.Columns.Add("Id", typeof(int));
+            results.Columns.Add("Order", typeof(string));
+            results.Columns.Add("Pass", typeof(int));
+            results.Columns.Add("Instance Id", typeof(int));
+            results.Columns.Add("Processed Total", typeof(int));
+            results.Columns.Add("States Total", typeof(int));
+            results.Columns.Add("Testing Accuracy", typeof(double));
+            results.Columns.Add("Training Time", typeof(long));
+            results.Columns.Add("Testing Time", typeof(long));
+            results.Columns.Add("Confusion Matrix", typeof(ConfusionMatrix));
+            results.Columns.Add("Decision Tree", typeof(string));
+            #endregion
+
+            #region Datasets
+            //Training parameters
+            string trainingCsvPath = DataSets(datasetName, defaultDatasetTrainingPercentage);
+            CsvStreamReader trainingData = new CsvStreamReader(trainingCsvPath);
+            string trainingLabelName = "class";
+
+            //Testing Parameters
+            string testingCsvPath = DataSets(datasetName, defaultDatasetTestingPercentage);
+            CsvStreamReader testingData = new CsvStreamReader(testingCsvPath);
+            string testingLabelName = "class";
+            int testingInterval = defaultTestingInterval;
+            #endregion
+
+            #region Policy configuration
+            Policy thePolicy = new Policy()
+            {
+                ExplorationRate = defaultExplorationRate,
+                DiscountFactor = defaultDiscountFactor,
+                ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
+                ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
+                QueriesLimit = defaultQueriesLimit,
+            };
+
+            #endregion
+
+            #region Processing
+            Stopwatch stopwatchProcessing = new Stopwatch(); stopwatchProcessing.Start();
+            int processedTotal = 0;
+            int passes = 9;
+            for (int pass = 1; pass <= passes; pass++)
+            {
+                //Cycle through each instance in the training file
+                while (!trainingData.EndOfStream)
+                {
+                    //Read line from the data
+                    DataVectorTraining instanceTraining = trainingData.ReadLine(trainingLabelName);
+
+                    //Only override for middle third of passes
+                    if ((pass == 4) || (pass == 5) || (pass == 6))
+                    {
+                        //Override importance values
+                        foreach (object[] featureImportance in featureImportances)
+                        {
+                            //Get name and importance
+                            string name = (string)featureImportance[0];
+                            double importance = Convert.ToDouble(featureImportance[1]);
+
+                            //Edit the training instance
+                            instanceTraining[name].Importance = importance;
+                        }
+                    }
+
+                    //Submit to Trainer
+                    Stopwatch stopwatchTraining = new Stopwatch();
+                    stopwatchTraining.Start();
+                    TrainingStats trainingStats = thePolicy.Learn(instanceTraining);
+                    processedTotal++;
+                    stopwatchTraining.Stop();
+
+                    //Record training stats
+                    DataRow result = results.NewRow();
+                    results.Rows.Add(result);
+                    result["Id"] = results.Rows.Count;
+                    result["Order"] = order;
+                    result["Pass"] = pass;
+                    result["Instance Id"] = trainingData.LineNumber;
+                    result["Processed Total"] = processedTotal;
+                    result["States Total"] = trainingStats.StatesTotal;
+                    result["Training Time"] = stopwatchTraining.ElapsedMilliseconds;
+
+                    //Perform Testing
+                    if (processedTotal % testingInterval == 0)
+                    {
+                        //Submit to Tester
+                        ConfusionMatrix confusionMatrix = new ConfusionMatrix();
+                        Stopwatch stopwatchTesting = new Stopwatch();
+                        stopwatchTesting.Start();
+                        while (!testingData.EndOfStream)
+                        {
+                            DataVectorTraining instanceTesting = testingData.ReadLine(testingLabelName);
+                            //Get values to compare
+                            object prediction = thePolicy.DecisionTree.Classify(instanceTesting);
+                            object correctAnswer = instanceTesting.Label.Value;
+
+                            //Build Confusion matrix
+                            confusionMatrix.AddEntry(correctAnswer, prediction);
+                        }
+                        stopwatchTesting.Stop();
+                        testingData.SeekOriginBegin();
+
+                        //Record testing stats
+                        result["Testing Accuracy"] = confusionMatrix.Accuracy;
+                        result["Testing Time"] = stopwatchTesting.ElapsedMilliseconds;
+                        result["Confusion Matrix"] = confusionMatrix;
+                        result["Decision Tree"] = thePolicy
+                            .ToDecisionTree(new DecisionTree.TreeSettings() { ShowBlanks = false})
+                            .ToHtmlTree(new DecisionTree.TreeNode.TreeDisplaySettings() { IncludeDefaultTreeStyling = false });
+                    }
+                }
+
+                //Reset training dataset
+                trainingData.SeekOriginBegin();
+            }
+            stopwatchProcessing.Stop();
+            #endregion
+
+            #region Save Results
+            //Create subfolder name
+            string subfolder = "";
+            foreach (object[] featureImportance in featureImportances)
+            {
+                //Get name and importance
+                string name = (string)featureImportance[0];
+                double importance = Convert.ToDouble(featureImportance[1]);
+                //Append names
+                if (subfolder.Length > 0)
+                    subfolder += ",";
+                subfolder += string.Format("{0}={1:F2}", name, importance);
+            }
+
+            if (!Directory.Exists(Path.Combine(ResultsDir, subfolder)))
+                Directory.CreateDirectory(Path.Combine(ResultsDir, subfolder));
+
+            // Save to CSV file
+            results.ToCsv(Path.Combine(ResultsDir, subfolder, "Data.csv"));
+
+            #region Save chart to html and pdf
+            //Create charts
+            Chart chartStates = new Chart("States vs Processed", "Processed", "States");
+            Chart chartAccuracy = new Chart("Accuracy vs Processed", "Processed", "% Correct");
+
+            //Add data to chart
+            foreach (DataRow r in results.Rows)
+            {
+                chartStates.Add("States", (int)r["Processed Total"], (int)r["States Total"]);
+                if (r["Testing Accuracy"] != DBNull.Value)
+                    chartAccuracy.Add("Accuracy", (int)r["Processed Total"], (double)r["Testing Accuracy"]);
+            }
+
+            //Save charts
+            chartStates.ToHtml(Path.Combine(ResultsDir, subfolder, "States"));
+            chartStates.ToPdf(Path.Combine(ResultsDir, subfolder, "States"));
+
+            chartAccuracy.ToHtml(Path.Combine(ResultsDir, subfolder, "Accuracy"));
+            chartAccuracy.ToPdf(Path.Combine(ResultsDir, subfolder, "Accuracy"));
+            #endregion
+
+            #region  Save confusion matrices with trees
+            string htmlConfMatWithTree = "<html>";
+            htmlConfMatWithTree += ConfusionMatrix.HtmlStyling;
+            htmlConfMatWithTree += DecisionTree.TreeNode.DefaultStyling;
+            htmlConfMatWithTree += "<table>";
+            htmlConfMatWithTree += "<tr>";
+            htmlConfMatWithTree += "<th>Pass</th>";
+            htmlConfMatWithTree += "<th>Processed Points</th>";
+            htmlConfMatWithTree += "<th>Confusion Matrix</th>";
+            htmlConfMatWithTree += "<th>Accuracy</th>";
+            htmlConfMatWithTree += "<th>Decision Tree</th>";
+            htmlConfMatWithTree += "</tr>";
+            foreach (DataRow dr in results.Rows.Cast<DataRow>().Where(p => p["Confusion Matrix"] != DBNull.Value))
+            {
+                ConfusionMatrix cm = (ConfusionMatrix)dr["Confusion Matrix"];
+                string tree = (string)dr["Decision Tree"];
+
+                htmlConfMatWithTree += "<tr>";
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", dr["Pass"]);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", dr["Processed Total"]);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", cm.ToHtml());
+                htmlConfMatWithTree += String.Format("<td>{0:F1}%</td>", cm.Accuracy*100);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", tree);
+                htmlConfMatWithTree += "</tr>";
+                htmlConfMatWithTree += Environment.NewLine;
+                htmlConfMatWithTree += Environment.NewLine;
+            }
+            htmlConfMatWithTree += "</table>";
+            htmlConfMatWithTree += "</html>";
+            File.WriteAllText(Path.Combine(this.ResultsDir, subfolder, "Confusion Matrix and Tree.html"), htmlConfMatWithTree);
+            #endregion
+
+            #region Save metadata file
+            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details.txt"));
+            swMeta.WriteLine("# Training Configuration");
+            swMeta.WriteLine("Training File: " + Path.GetFileName(trainingCsvPath));
+            swMeta.WriteLine("Training File Path: " + trainingCsvPath);
+            swMeta.WriteLine("Testing File: " + Path.GetFileName(testingCsvPath));
+            swMeta.WriteLine("Testing File Path: " + testingCsvPath);
+            swMeta.WriteLine("Total Processing Time (ms): " + stopwatchProcessing.ElapsedMilliseconds);
+            swMeta.WriteLine("Passes: " + passes);
+
+            swMeta.WriteLine();
+
+            swMeta.WriteLine("# Policy Configuration");
+            swMeta.WriteLine("Exploration Rate: " + thePolicy.ExplorationRate.ToString("N2"));
+            swMeta.WriteLine("Discount Factor: " + thePolicy.DiscountFactor);
+            swMeta.WriteLine("Parallel Query Updates: " + thePolicy.ParallelQueryUpdatesEnabled);
+            swMeta.WriteLine("Parallel Report Updates: " + thePolicy.ParallelReportUpdatesEnabled);
+            swMeta.Close();
+            #endregion
+            #endregion
+
+            //Close datasets
+            trainingData.Close();
+            testingData.Close();
         }
 
         [Fact]

@@ -1454,7 +1454,213 @@ namespace RLDT.Experiments
         [Fact]
         public void PartialDatavectors()
         {
-            //Track the accuracy when using partial datavectors. i.e. a datavector may arrive with some of the expected features missing.
+            //The regular policy is trained as if all data is available.
+            //The specific policy is trained without some features. It will act as the baseline.
+            //Testing data is modified to remove those same features and classified by both policies.
+            //The goal is to check if the regular policy performs the same.
+
+            string datasetName = "random.csv";
+            string order = Path.GetFileNameWithoutExtension(datasetName);
+            #region Result Storage
+            DataTable results = new DataTable();
+            results.Columns.Add("Id", typeof(int));
+            results.Columns.Add("Order", typeof(string));
+            results.Columns.Add("Pass", typeof(int));
+            results.Columns.Add("Instance Id", typeof(int));
+            results.Columns.Add("Processed Total", typeof(int));
+            results.Columns.Add("States Total", typeof(int));
+            results.Columns.Add("States Total - Specific", typeof(int));
+            results.Columns.Add("Testing Accuracy", typeof(double));
+            results.Columns.Add("Testing Accuracy - Specific", typeof(double));
+            results.Columns.Add("Confusion Matrix", typeof(ConfusionMatrix));
+            results.Columns.Add("Confusion Matrix - Specific", typeof(ConfusionMatrix));
+            #endregion
+
+            #region Datasets
+            //Training parameters
+            string trainingCsvPath = DataSets(datasetName, defaultDatasetTrainingPercentage);
+            CsvStreamReader trainingData = new CsvStreamReader(trainingCsvPath);
+            string trainingLabelName = "class";
+            int passes = 1;
+
+            //Testing Parameters
+            string testingCsvPath = DataSets(datasetName, defaultDatasetTestingPercentage);
+            CsvStreamReader testingData = new CsvStreamReader(testingCsvPath);
+            string testingLabelName = "class";
+            int testingInterval = defaultTestingInterval;
+            #endregion
+
+            #region Policy configuration
+            Policy thePolicy = new Policy()
+            {
+                ExplorationRate = defaultExplorationRate,
+                DiscountFactor = defaultDiscountFactor,
+                ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
+                ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
+                QueriesLimit = defaultQueriesLimit,
+            };
+
+            Policy thePolicySpecific = new Policy()
+            {
+                ExplorationRate = defaultExplorationRate,
+                DiscountFactor = defaultDiscountFactor,
+                ParallelQueryUpdatesEnabled = defaultParallelQueryUpdatesEnabled,
+                ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
+                QueriesLimit = defaultQueriesLimit,
+            };
+            #endregion
+
+            #region Processing
+            Stopwatch stopwatchProcessing = new Stopwatch(); stopwatchProcessing.Start();
+            int processedTotal = 0;
+            for (int pass = 1; pass <= passes; pass++)
+            {
+                //Cycle through each instance in the training file
+                while (!trainingData.EndOfStream)
+                {
+                    //Read line of data
+                    DataVectorTraining instanceTraining = trainingData.ReadLine(trainingLabelName);
+
+                    //Submit to regular policy Trainer
+                    TrainingStats trainingStatsNormal = thePolicy.Learn(instanceTraining);
+
+                    //Submit to specific policy (i.e. without certain features)
+                    instanceTraining.Features.RemoveAll(p=> p.Name == "odor");
+                    instanceTraining.Features.RemoveAll(p=> p.Name == "spore-print-color");
+                    TrainingStats trainingStatsSpecific = thePolicySpecific.Learn(instanceTraining);
+
+                    processedTotal++;
+
+                    //Record training stats
+                    DataRow result = results.NewRow();
+                    results.Rows.Add(result);
+                    result["Id"] = results.Rows.Count;
+                    result["Order"] = order;
+                    result["Pass"] = pass;
+                    result["Instance Id"] = trainingData.LineNumber;
+                    result["Processed Total"] = processedTotal;
+                    result["States Total"] = trainingStatsNormal.StatesTotal;
+                    result["States Total - Specific"] = trainingStatsSpecific.StatesTotal;
+
+                    //Perform Testing
+                    if (processedTotal % testingInterval == 0)
+                    {
+                        //Submit to Tester
+                        ConfusionMatrix confusionMatrix = new ConfusionMatrix();
+                        ConfusionMatrix confusionMatrixSpecific = new ConfusionMatrix();
+                        while (!testingData.EndOfStream)
+                        {
+                            //Read line of testing data, and remove features
+                            DataVectorTraining instanceTesting = testingData.ReadLine(testingLabelName);
+                            instanceTesting.Features.RemoveAll(p => p.Name == "odor");
+                            instanceTesting.Features.RemoveAll(p => p.Name == "spore-print-color");
+
+                            //Classifiy with normal policy and specific policy
+                            object prediction = thePolicy.Classify_ByPolicy(instanceTesting);
+                            object predictionSpecific = thePolicySpecific.Classify_ByPolicy(instanceTesting);
+                            object correctAnswer = instanceTesting.Label.Value;
+
+                            //Build confusion matrix
+                            confusionMatrix.AddEntry(correctAnswer, prediction);
+                            confusionMatrixSpecific.AddEntry(correctAnswer, predictionSpecific);
+                        }
+                        testingData.SeekOriginBegin();
+
+                        //Record testing stats
+                        result["Testing Accuracy"] = confusionMatrix.Accuracy;
+                        result["Testing Accuracy - Specific"] = confusionMatrixSpecific.Accuracy;
+                        result["Confusion Matrix"] = confusionMatrix;
+                        result["Confusion Matrix - Specific"] = confusionMatrixSpecific;
+                    }
+                }
+
+                //Reset training dataset
+                trainingData.SeekOriginBegin();
+            }
+            stopwatchProcessing.Stop();
+            #endregion
+
+            #region Save Results
+            // Save to CSV file
+            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
+
+            #region Save chart to html and pdf
+            //Create charts
+            Chart chartStates = new Chart("States vs Processed", "Processed", "States");
+            Chart chartAccuracy = new Chart("Accuracy vs Processed", "Processed", "% Correct");
+
+            //Add data to chart
+            foreach (DataRow r in results.Rows)
+            {
+                chartStates.Add("Normal", (int)r["Processed Total"], (int)r["States Total"]);
+                chartStates.Add("Specific", (int)r["Processed Total"], (int)r["States Total - Specific"]);
+
+                if (r["Testing Accuracy"] != DBNull.Value)
+                { 
+                    chartAccuracy.Add("Missing Features", (int)r["Processed Total"], (double)r["Testing Accuracy"]);
+                    chartAccuracy.Add("Baseline", (int)r["Processed Total"], (double)r["Testing Accuracy - Specific"]);
+                }
+            }
+
+            //Save charts
+            chartStates.ToHtml(Path.Combine(ResultsDir, "States"));
+            chartStates.ToPdf(Path.Combine(ResultsDir, "States"));
+
+            chartAccuracy.ToHtml(Path.Combine(ResultsDir, "Accuracy"));
+            chartAccuracy.ToPdf(Path.Combine(ResultsDir, "Accuracy"));
+            #endregion
+
+            #region  Save confusion matrices
+            string htmlConfusionMatrix = "<html>";
+            htmlConfusionMatrix += ConfusionMatrix.HtmlStyling;
+            htmlConfusionMatrix += "<table>";
+            htmlConfusionMatrix += "<tr>";
+            htmlConfusionMatrix += "<th>Processed Points</th>";
+            htmlConfusionMatrix += "<th>Confusion Matrix</th>";
+            htmlConfusionMatrix += "<th>Confusion Matrix - Specific</th>";
+            htmlConfusionMatrix += "</tr>";
+            foreach (DataRow dr in results.Rows.Cast<DataRow>().Where(p => p["Confusion Matrix"] != DBNull.Value))
+            {
+                ConfusionMatrix cm = (ConfusionMatrix)dr["Confusion Matrix"];
+                ConfusionMatrix cmSpecific = (ConfusionMatrix)dr["Confusion Matrix"];
+
+                htmlConfusionMatrix += "<tr>";
+                htmlConfusionMatrix += String.Format("<td>{0}</td>", dr["Processed Total"]);
+                htmlConfusionMatrix += String.Format("<td>{0}</td>", cm.ToHtml());
+                htmlConfusionMatrix += String.Format("<td>{0}</td>", cmSpecific.ToHtml());
+                htmlConfusionMatrix += "</tr>";
+                htmlConfusionMatrix += Environment.NewLine;
+                htmlConfusionMatrix += Environment.NewLine;
+            }
+            htmlConfusionMatrix += "</table>";
+            htmlConfusionMatrix += "</html>";
+            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix.html"), htmlConfusionMatrix);
+            #endregion
+
+            #region Save metadata file
+            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details.txt"));
+            swMeta.WriteLine("# Training Configuration");
+            swMeta.WriteLine("Training File: " + Path.GetFileName(trainingCsvPath));
+            swMeta.WriteLine("Training File Path: " + trainingCsvPath);
+            swMeta.WriteLine("Testing File: " + Path.GetFileName(testingCsvPath));
+            swMeta.WriteLine("Testing File Path: " + testingCsvPath);
+            swMeta.WriteLine("Total Processing Time (ms): " + stopwatchProcessing.ElapsedMilliseconds);
+            swMeta.WriteLine("Passes: " + passes);
+
+            swMeta.WriteLine();
+
+            swMeta.WriteLine("# Policy Configuration");
+            swMeta.WriteLine("Exploration Rate: " + thePolicy.ExplorationRate.ToString("N2"));
+            swMeta.WriteLine("Discount Factor: " + thePolicy.DiscountFactor);
+            swMeta.WriteLine("Parallel Query Updates: " + thePolicy.ParallelQueryUpdatesEnabled);
+            swMeta.WriteLine("Parallel Report Updates: " + thePolicy.ParallelReportUpdatesEnabled);
+            swMeta.Close();
+            #endregion
+            #endregion
+
+            //Close datasets
+            trainingData.Close();
+            testingData.Close();
         }
 
         [Fact]

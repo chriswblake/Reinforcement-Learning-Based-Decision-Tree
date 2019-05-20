@@ -1204,8 +1204,8 @@ namespace RLDT.Experiments
 
         [Theory]
         [InlineData(0, new object[] {new object[]{"odor", -1 }})]
-        [InlineData(0, new object[] {new object[]{ "veil-color", -1 }})]
-        [InlineData(0, new object[] { new object[]{"odor", -1 }, new object[]{ "veil-color", -1 }})]
+        //[InlineData(0, new object[] {new object[]{ "veil-color", -1 }})]
+        //[InlineData(0, new object[] { new object[]{"odor", -1 }, new object[]{ "veil-color", -1 }})]
         public void FeatureImportance(int dummy, object[] featureImportances)
         {
             //Inserting a new feature half-way through and changing the weights to simulate sensor obsoletion.
@@ -1255,7 +1255,7 @@ namespace RLDT.Experiments
             #region Processing
             Stopwatch stopwatchProcessing = new Stopwatch(); stopwatchProcessing.Start();
             int processedTotal = 0;
-            int passes = 9;
+            int passes = 1;
             for (int pass = 1; pass <= passes; pass++)
             {
                 //Cycle through each instance in the training file
@@ -1350,9 +1350,6 @@ namespace RLDT.Experiments
             if (!Directory.Exists(Path.Combine(ResultsDir, subfolder)))
                 Directory.CreateDirectory(Path.Combine(ResultsDir, subfolder));
 
-            // Save to CSV file
-            results.ToCsv(Path.Combine(ResultsDir, subfolder, "Data.csv"));
-
             #region Save chart to html and pdf
             //Create charts
             Chart chartStates = new Chart("States vs Processed", "Processed", "States");
@@ -1425,6 +1422,12 @@ namespace RLDT.Experiments
             swMeta.WriteLine("Parallel Report Updates: " + thePolicy.ParallelReportUpdatesEnabled);
             swMeta.Close();
             #endregion
+
+            // Save to CSV file
+            results.Columns.Remove("Confusion Matrix");
+            results.Columns.Remove("Decision Tree");
+            results.ToCsv(Path.Combine(ResultsDir, subfolder, "Data.csv"));
+
             #endregion
 
             //Close datasets

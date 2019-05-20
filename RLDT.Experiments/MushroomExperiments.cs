@@ -1019,7 +1019,7 @@ namespace RLDT.Experiments
         }
 
         [Fact]
-        public void SpeedComparison()
+        public void SpeedAccuracyComparison()
         {
             #region Result Storage
             DataTable results = new DataTable();
@@ -1029,9 +1029,11 @@ namespace RLDT.Experiments
             results.Columns.Add("MDP Min Classification Time", typeof(double));
             results.Columns.Add("MDP Avg Classification Time", typeof(double));
             results.Columns.Add("MDP Max Classification Time", typeof(double));
+            results.Columns.Add("MDP Accuracy", typeof(double));
             results.Columns.Add("Tree Min Classification Time", typeof(double));
             results.Columns.Add("Tree Avg Classification Time", typeof(double));
             results.Columns.Add("Tree Max Classification Time", typeof(double));
+            results.Columns.Add("Tree Accuracy", typeof(double));
             #endregion
 
             #region Datasets
@@ -1081,6 +1083,8 @@ namespace RLDT.Experiments
                     if (processedTotal % testingInterval == 0)
                     {
                         //Submit to Tester
+                        ConfusionMatrix confusionMatrixMDP = new ConfusionMatrix();
+                        ConfusionMatrix confusionMatrixTree = new ConfusionMatrix();
                         List<double> timesMDP = new List<double>();
                         List<double> timesTree = new List<double>();
                         Stopwatch stopwatchMDP = new Stopwatch(); 
@@ -1088,18 +1092,23 @@ namespace RLDT.Experiments
                         while (!testingData.EndOfStream)
                         {
                             DataVectorTraining instanceTesting = testingData.ReadLine(testingLabelName);
+                            object correctAnswer = instanceTesting.Label.Value;
 
                             //Classify with MDP
                             stopwatchMDP.Start();
-                            thePolicy.Classify_ByPolicy(instanceTesting);
+                            object predictionMDP = thePolicy.Classify_ByPolicy(instanceTesting);
                             stopwatchMDP.Stop();
                             timesMDP.Add(stopwatchMDP.Elapsed.TotalMilliseconds);
 
                             //Classify with Tree
                             stopwatchTree.Start();
-                            thePolicy.Classify_ByTree(instanceTesting);
+                            object predictionTree = thePolicy.Classify_ByTree(instanceTesting);
                             stopwatchTree.Stop();
                             timesTree.Add(stopwatchTree.Elapsed.TotalMilliseconds);
+
+                            //Build Confusion matrix
+                            confusionMatrixMDP.AddEntry(correctAnswer, predictionMDP);
+                            confusionMatrixTree.AddEntry(correctAnswer, predictionTree);
                         }
                         testingData.SeekOriginBegin();
 
@@ -1112,9 +1121,11 @@ namespace RLDT.Experiments
                         result["MDP Min Classification Time"] = timesMDP.Min();
                         result["MDP Avg Classification Time"] = timesMDP.Average();
                         result["MDP Max Classification Time"] = timesMDP.Max();
+                        result["MDP Accuracy"] = confusionMatrixMDP.Accuracy;
                         result["Tree Min Classification Time"] = timesTree.Min();
                         result["Tree Avg Classification Time"] = timesTree.Average();
                         result["Tree Max Classification Time"] = timesTree.Max();
+                        result["Tree Accuracy"] = confusionMatrixTree.Accuracy;
                     }
                 }
 
@@ -1133,11 +1144,13 @@ namespace RLDT.Experiments
             Chart chartStates = new Chart("States vs Processed", "Processed", "States");
             Chart chartTimeVsStatesMDP = new Chart("Time vs States", "States", "Classification Time (ms)");
             Chart chartTimeVsStatesTree = new Chart("Time vs States", "States", "Classification Time (ms)");
+            Chart chartAccuracy = new Chart("Accuracy vs Processed", "Processed", "Accuracy");
 
             //Add data to chart
             foreach (DataRow r in results.Rows)
             {
                 chartStates.Add("States", (int)r["Processed Total"], (int)r["States Total"]);
+
                 if (r["MDP Min Classification Time"] != DBNull.Value)
                 { 
                     chartTimeVsStatesMDP.Add("MDP Min", (int)r["States Total"], (double)r["MDP Min Classification Time"]);
@@ -1146,6 +1159,12 @@ namespace RLDT.Experiments
                     chartTimeVsStatesTree.Add("Tree Min", (int)r["States Total"], (double)r["Tree Min Classification Time"]);
                     chartTimeVsStatesTree.Add("Tree Avg", (int)r["States Total"], (double)r["Tree Avg Classification Time"]);
                     chartTimeVsStatesTree.Add("Tree Max", (int)r["States Total"], (double)r["Tree Max Classification Time"]);
+                }
+
+                if (r["MDP Accuracy"] != DBNull.Value)
+                {
+                    chartAccuracy.Add("MDP", (int)r["Processed Total"], (double)r["MDP Accuracy"]);
+                    chartAccuracy.Add("Tree", (int)r["Processed Total"], (double)r["Tree Accuracy"]);
                 }
             }
 
@@ -1158,6 +1177,9 @@ namespace RLDT.Experiments
 
             chartTimeVsStatesTree.ToHtml(Path.Combine(ResultsDir, "Tree Times"));
             chartTimeVsStatesTree.ToPdf(Path.Combine(ResultsDir, "Tree Times"));
+
+            chartAccuracy.ToHtml(Path.Combine(ResultsDir, "Accuracy"));
+            chartAccuracy.ToPdf(Path.Combine(ResultsDir, "Acccuracy"));
             #endregion
 
             #region Save metadata file
@@ -1194,12 +1216,6 @@ namespace RLDT.Experiments
             //Close datasets
             trainingData.Close();
             testingData.Close();
-        }
-
-        [Fact]
-        public void AccuracyComparison()
-        {
-            //The  MDP vs the summarized Tree
         }
 
         [Theory]

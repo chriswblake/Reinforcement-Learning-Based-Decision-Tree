@@ -23,7 +23,7 @@ namespace RLDT
                 return _Importance;
             }
 
-            private set
+            set
             {
                 if (value > 1.0)
                     _Importance = 1.0;
@@ -45,7 +45,7 @@ namespace RLDT
         {
             string s = "";
             s += base.ToString();
-            s += " Reward=" + this.Importance.ToString().PadRight(5, ' ');
+            s += " Importance=" + this.Importance.ToString().PadRight(5, ' ');
             //s += ", " + this.GetHashCode();
             return s;
         }

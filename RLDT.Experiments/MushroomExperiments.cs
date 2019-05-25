@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Xunit;
+using RLDT.DecisionTree.Latex;
 
 namespace RLDT.Experiments
 {
@@ -26,6 +27,11 @@ namespace RLDT.Experiments
         [InlineData("randomInversedLabel", 80)]
         public string DataSets(string name, int percentage=100)
         {
+            //Automatically splits a dataset into sub-datasets and caches results.
+            //Example:
+            //Training data: Datasets("random", 80) - 20% version is also created and cached
+            //Testing data: Datasets("random", 20)
+
             //Remove folder information and extension
             name = Path.GetFileNameWithoutExtension(name);
 
@@ -92,10 +98,13 @@ namespace RLDT.Experiments
         }
 
         [Theory]
-        [InlineData("original")]
-        [InlineData("random")]
+        [InlineData("original")] //6 sec 
+        [InlineData("random")] //3 sec
         public void DataOrder(string datasetName)
         {
+            //A policy is trained with various datasets that have been organized
+            //in different ways.
+
             string order = Path.GetFileNameWithoutExtension(datasetName);
             #region Result Storage
             DataTable results = new DataTable();
@@ -109,6 +118,8 @@ namespace RLDT.Experiments
             results.Columns.Add("Training Time", typeof(long));
             results.Columns.Add("Testing Time", typeof(long));
             results.Columns.Add("Confusion Matrix", typeof(ConfusionMatrix));
+            results.Columns.Add("Decision Tree", typeof(string));
+            results.Columns.Add("Latex Tree", typeof(string));
             #endregion
 
             #region Datasets
@@ -188,6 +199,9 @@ namespace RLDT.Experiments
                         result["Testing Accuracy"] = confusionMatrix.Accuracy;
                         result["Testing Time"] = stopwatchTesting.ElapsedMilliseconds;
                         result["Confusion Matrix"] = confusionMatrix;
+                        var tree = thePolicy.ToDecisionTree(new DecisionTree.TreeSettings() { ShowBlanks = false, ShowSubScores=false });
+                        result["Decision Tree"] = tree.ToHtmlTree(new DecisionTree.TreeNode.TreeDisplaySettings() { IncludeDefaultTreeStyling = false });
+                        result["Latex Tree"] = tree.ToLatexForest();
                     }
                 }
 
@@ -198,11 +212,11 @@ namespace RLDT.Experiments
             #endregion
 
             #region Save Results
-            string suffix = order;
-
-            // Save to CSV file
-            results.ToCsv(Path.Combine(ResultsDir, "Data " + suffix + ".csv"));
-
+            //Create subfolder name
+            string subfolder = order;
+            if (!Directory.Exists(Path.Combine(ResultsDir, subfolder)))
+                Directory.CreateDirectory(Path.Combine(ResultsDir, subfolder));
+           
             #region Save chart to html and pdf
             //Create charts
             Chart chartStates = new Chart("States vs Processed", "Processed", "States");
@@ -217,39 +231,46 @@ namespace RLDT.Experiments
             }
 
             //Save charts
-            chartStates.ToHtml(Path.Combine(ResultsDir, "States " + suffix));
-            chartStates.ToPdf(Path.Combine(ResultsDir, "States " + suffix));
+            chartStates.ToHtml(Path.Combine(ResultsDir, subfolder, "States"));
+            chartStates.ToPdf(Path.Combine(ResultsDir, subfolder, "States"));
 
-            chartAccuracy.ToHtml(Path.Combine(ResultsDir, "Accuracy " + suffix));
-            chartAccuracy.ToPdf(Path.Combine(ResultsDir, "Accuracy " + suffix));
+            chartAccuracy.ToHtml(Path.Combine(ResultsDir, subfolder, "Accuracy"));
+            chartAccuracy.ToPdf(Path.Combine(ResultsDir, subfolder, "Accuracy"));
             #endregion
 
-            #region  Save confusion matrices
-            string htmlConfusionMatrix = "<html>";
-            htmlConfusionMatrix += ConfusionMatrix.HtmlStyling;
-            htmlConfusionMatrix += "<table>";
-            htmlConfusionMatrix += "<tr>";
-            htmlConfusionMatrix += "<th>Processed Points</th>";
-            htmlConfusionMatrix += "<th>Confusion Matrix</th>";
-            htmlConfusionMatrix += "</tr>";
+            #region  Save confusion matrices and trees
+            string htmlConfMatWithTree = "<html>";
+            htmlConfMatWithTree += ConfusionMatrix.HtmlStyling;
+            htmlConfMatWithTree += DecisionTree.TreeNode.DefaultStyling;
+            htmlConfMatWithTree += "<table>";
+            htmlConfMatWithTree += "<tr>";
+            htmlConfMatWithTree += "<th>Processed Points</th>";
+            htmlConfMatWithTree += "<th>Confusion Matrix</th>";
+            htmlConfMatWithTree += "<th>Accuracy</th>";
+            htmlConfMatWithTree += "<th>Decision Tree</th>";
+            htmlConfMatWithTree += "<th>Latex</th>";
+            htmlConfMatWithTree += "</tr>";
             foreach (DataRow dr in results.Rows.Cast<DataRow>().Where(p => p["Confusion Matrix"] != DBNull.Value))
             {
                 ConfusionMatrix cm = (ConfusionMatrix)dr["Confusion Matrix"];
 
-                htmlConfusionMatrix += "<tr>";
-                htmlConfusionMatrix += String.Format("<td>{0}</td>", dr["Processed Total"]);
-                htmlConfusionMatrix += String.Format("<td>{0}</td>", cm.ToHtml());
-                htmlConfusionMatrix += "</tr>";
-                htmlConfusionMatrix += Environment.NewLine;
-                htmlConfusionMatrix += Environment.NewLine;
+                htmlConfMatWithTree += "<tr>";
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", dr["Processed Total"]);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", cm.ToHtml());
+                htmlConfMatWithTree += String.Format("<td>{0:F1}%</td>", cm.Accuracy*100);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", (string)dr["Decision Tree"]);
+                htmlConfMatWithTree += String.Format("<td style='border: 1px solid #AAAAAA;'><small><pre>{0}</pre></small></td>", (string)dr["Latex Tree"]);
+                htmlConfMatWithTree += "</tr>";
+                htmlConfMatWithTree += Environment.NewLine;
+                htmlConfMatWithTree += Environment.NewLine;
             }
-            htmlConfusionMatrix += "</table>";
-            htmlConfusionMatrix += "</html>";
-            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix " + suffix + ".html"), htmlConfusionMatrix);
+            htmlConfMatWithTree += "</table>";
+            htmlConfMatWithTree += "</html>";
+            File.WriteAllText(Path.Combine(this.ResultsDir, subfolder, "Confusion Matrix and Tree.html"), htmlConfMatWithTree);
             #endregion
 
             #region Save metadata file
-            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details " + suffix + ".txt"));
+            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, subfolder, "details.txt"));
             swMeta.WriteLine("# Training Configuration");
             swMeta.WriteLine("Training File: " + Path.GetFileName(trainingCsvPath));
             swMeta.WriteLine("Training File Path: " + trainingCsvPath);
@@ -268,15 +289,11 @@ namespace RLDT.Experiments
             swMeta.Close();
             #endregion
 
-            #region Save decision tree (as HTML)
-            DecisionTree.TreeSettings ts_simple = new DecisionTree.TreeSettings()
-            {
-                ShowBlanks = false,
-                ShowSubScores = false
-            };
-            File.WriteAllText(Path.Combine(ResultsDir, "tree-full " + suffix + ".html"), thePolicy.DecisionTree.ToHtmlTree());
-            File.WriteAllText(Path.Combine(ResultsDir, "tree-simple " + suffix + ".html"), thePolicy.ToDecisionTree(ts_simple).ToHtmlTree());
-            #endregion
+            // Save to CSV file
+            results.Columns.Remove("Confusion Matrix");
+            results.Columns.Remove("Decision Tree");
+            results.Columns.Remove("Latex Tree");
+            results.ToCsv(Path.Combine(ResultsDir, subfolder, "Data.csv"));
             #endregion
 
             //Close datasets
@@ -285,11 +302,14 @@ namespace RLDT.Experiments
         }
 
         [Theory]
-        [InlineData(new double[] { 0.40, 0.45 })]
-        [InlineData(new double[] { 0.50, 0.55, 0.60, 0.65, 0.70, 0.75 })]
-        [InlineData(new double[] { 0.80, 0.85, 0.90, 0.95 })]
+        [InlineData(new double[] { 0.40, 0.45 })] //7 sec
+        [InlineData(new double[] { 0.50, 0.55, 0.60, 0.65, 0.70, 0.75 })] //23 sec
+        [InlineData(new double[] { 0.80, 0.85, 0.90, 0.95 })] //19sec
         public void DiscountFactor(double[] discountFactors)
         {
+            //A serioes of policies are trained with changing discount factors
+            //to create plots of countour lines.
+
             #region Result Storage
             DataTable results = new DataTable();
             results.Columns.Add("Id", typeof(int));
@@ -302,6 +322,8 @@ namespace RLDT.Experiments
             results.Columns.Add("Training Time", typeof(long));
             results.Columns.Add("Testing Time", typeof(long));
             results.Columns.Add("Confusion Matrix", typeof(ConfusionMatrix));
+            results.Columns.Add("Decision Tree", typeof(string));
+            results.Columns.Add("Latex Tree", typeof(string));
             #endregion
 
             #region Datasets
@@ -383,6 +405,9 @@ namespace RLDT.Experiments
                             result["Testing Accuracy"] = confusionMatrix.Accuracy;
                             result["Testing Time"] = stopwatchTesting.ElapsedMilliseconds;
                             result["Confusion Matrix"] = confusionMatrix;
+                            var tree = thePolicy.ToDecisionTree(new DecisionTree.TreeSettings() { ShowBlanks = false, ShowSubScores = false });
+                            result["Decision Tree"] = tree.ToHtmlTree(new DecisionTree.TreeNode.TreeDisplaySettings() { IncludeDefaultTreeStyling = false });
+                            result["Latex Tree"] = tree.ToLatexForest();
                         }
                     }
 
@@ -396,9 +421,6 @@ namespace RLDT.Experiments
 
             #region Save Results
             string suffix = string.Join("-", discountFactors.Select(p => p.ToString("N2"))).Replace("0.", "");
-
-            // Save to CSV file
-            results.ToCsv(Path.Combine(ResultsDir, "Data " + suffix + ".csv"));
 
             #region Save chart to html and pdf
             //Create charts
@@ -422,28 +444,37 @@ namespace RLDT.Experiments
             chartAccuracy.ToPdf(Path.Combine(ResultsDir, "Accuracy " + suffix));
             #endregion
 
-            #region  Save confusion matrices
-            string htmlConfusionMatrix = "<html>";
-            htmlConfusionMatrix += ConfusionMatrix.HtmlStyling;
-            htmlConfusionMatrix += "<table>";
-            htmlConfusionMatrix += "<tr>";
-            htmlConfusionMatrix += "<th>Processed Points</th>";
-            htmlConfusionMatrix += "<th>Confusion Matrix</th>";
-            htmlConfusionMatrix += "</tr>";
+            #region  Save confusion matrices with tree
+            string htmlConfMatWithTree = "<html>";
+            htmlConfMatWithTree += ConfusionMatrix.HtmlStyling;
+            htmlConfMatWithTree += DecisionTree.TreeNode.DefaultStyling;
+            htmlConfMatWithTree += "<table>";
+            htmlConfMatWithTree += "<tr>";
+            htmlConfMatWithTree += "<th>Pass</th>";
+            htmlConfMatWithTree += "<th>Processed Points</th>";
+            htmlConfMatWithTree += "<th>Confusion Matrix</th>";
+            htmlConfMatWithTree += "<th>Accuracy</th>";
+            htmlConfMatWithTree += "<th>Decision Tree</th>";
+            htmlConfMatWithTree += "<th>Latex</th>";
+            htmlConfMatWithTree += "</tr>";
             foreach (DataRow dr in results.Rows.Cast<DataRow>().Where(p => p["Confusion Matrix"] != DBNull.Value))
             {
                 ConfusionMatrix cm = (ConfusionMatrix)dr["Confusion Matrix"];
 
-                htmlConfusionMatrix += "<tr>";
-                htmlConfusionMatrix += String.Format("<td>{0}</td>", dr["Processed Total"]);
-                htmlConfusionMatrix += String.Format("<td>{0}</td>", cm.ToHtml());
-                htmlConfusionMatrix += "</tr>";
-                htmlConfusionMatrix += Environment.NewLine;
-                htmlConfusionMatrix += Environment.NewLine;
+                htmlConfMatWithTree += "<tr>";
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", dr["Pass"]);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", dr["Processed Total"]);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", cm.ToHtml());
+                htmlConfMatWithTree += String.Format("<td>{0:F1}%</td>", cm.Accuracy * 100);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", (string)dr["Decision Tree"]);
+                htmlConfMatWithTree += String.Format("<td style='border: 1px solid #AAAAAA;'><small><pre>{0}</pre></small></td>", (string)dr["Latex Tree"]);
+                htmlConfMatWithTree += "</tr>";
+                htmlConfMatWithTree += Environment.NewLine;
+                htmlConfMatWithTree += Environment.NewLine;
             }
-            htmlConfusionMatrix += "</table>";
-            htmlConfusionMatrix += "</html>";
-            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix " + suffix + ".html"), htmlConfusionMatrix);
+            htmlConfMatWithTree += "</table>";
+            htmlConfMatWithTree += "</html>";
+            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix and Tree " + suffix + ".html"), htmlConfMatWithTree);
             #endregion
 
             #region Save metadata file
@@ -465,6 +496,13 @@ namespace RLDT.Experiments
             swMeta.WriteLine("Parallel Report Updates: " + thePolicy.ParallelReportUpdatesEnabled);
             swMeta.Close();
             #endregion
+
+            // Save to CSV file
+            results.Columns.Remove("Confusion Matrix");
+            results.Columns.Remove("Decision Tree");
+            results.Columns.Remove("Latex Tree");
+            results.ToCsv(Path.Combine(ResultsDir, "Data " + suffix + ".csv"));
+
             #endregion
 
             //Close datasets
@@ -473,10 +511,13 @@ namespace RLDT.Experiments
         }
 
         [Theory]
-        [InlineData(new double[] { 0.0, 0.01, 0.5 })]
-        [InlineData(new double[] { 0.0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 })]
+        [InlineData(new double[] { 0.0, 0.01, 0.5 })] //18 sec
+        [InlineData(new double[] { 0.0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 })]//3.3 min
         public void ExplorationRate(double[] explorationRates)
         {
+            //A serioes of policies are trained with changing exploration rates
+            //to create plots of countour lines.
+
             #region Result Storage
             DataTable results = new DataTable();
             results.Columns.Add("Id", typeof(int));
@@ -491,6 +532,8 @@ namespace RLDT.Experiments
             results.Columns.Add("Training Time", typeof(long));
             results.Columns.Add("Testing Time", typeof(long));
             results.Columns.Add("Confusion Matrix", typeof(ConfusionMatrix));
+            results.Columns.Add("Decision Tree", typeof(string));
+            results.Columns.Add("Latex Tree", typeof(string));
             #endregion
 
             #region Datasets
@@ -521,7 +564,6 @@ namespace RLDT.Experiments
                     ParallelReportUpdatesEnabled = defaultParallelReportUpdatesEnabled,
                     QueriesLimit = defaultQueriesLimit,
                 };
-
 
                 #region Training/Testing
                 int processedTotal = 0;
@@ -575,6 +617,9 @@ namespace RLDT.Experiments
                             result["Testing Accuracy"] = confusionMatrix.Accuracy;
                             result["Testing Time"] = stopwatchTesting.ElapsedMilliseconds;
                             result["Confusion Matrix"] = confusionMatrix;
+                            var tree = thePolicy.ToDecisionTree(new DecisionTree.TreeSettings() { ShowBlanks = false, ShowSubScores = false });
+                            result["Decision Tree"] = tree.ToHtmlTree(new DecisionTree.TreeNode.TreeDisplaySettings() { IncludeDefaultTreeStyling = false });
+                            result["Latex Tree"] = tree.ToLatexForest();
                         }
                     }
 
@@ -588,10 +633,7 @@ namespace RLDT.Experiments
 
             #region Save Results
             string suffix = string.Join("-", explorationRates.Select(p => p.ToString("N2"))).Replace("0.", "");
-
-            // Save to CSV file
-            results.ToCsv(Path.Combine(ResultsDir, "Data " + suffix + ".csv"));
-
+            
             #region Save chart to html and pdf
             //Create charts
             Chart chartStates = new Chart("States vs Processed", "Processed", "States");
@@ -629,28 +671,37 @@ namespace RLDT.Experiments
 
             #endregion
 
-            #region  Save confusion matrices
-            string htmlConfusionMatrix = "<html>";
-            htmlConfusionMatrix += ConfusionMatrix.HtmlStyling;
-            htmlConfusionMatrix += "<table>";
-            htmlConfusionMatrix += "<tr>";
-            htmlConfusionMatrix += "<th>Processed Points</th>";
-            htmlConfusionMatrix += "<th>Confusion Matrix</th>";
-            htmlConfusionMatrix += "</tr>";
+            #region  Save confusion matrices and trees
+            string htmlConfMatWithTree = "<html>";
+            htmlConfMatWithTree += ConfusionMatrix.HtmlStyling;
+            htmlConfMatWithTree += DecisionTree.TreeNode.DefaultStyling;
+            htmlConfMatWithTree += "<table>";
+            htmlConfMatWithTree += "<tr>";
+            htmlConfMatWithTree += "<th>Pass</th>";
+            htmlConfMatWithTree += "<th>Processed Points</th>";
+            htmlConfMatWithTree += "<th>Confusion Matrix</th>";
+            htmlConfMatWithTree += "<th>Accuracy</th>";
+            htmlConfMatWithTree += "<th>Decision Tree</th>";
+            htmlConfMatWithTree += "<th>Latex</th>";
+            htmlConfMatWithTree += "</tr>";
             foreach (DataRow dr in results.Rows.Cast<DataRow>().Where(p => p["Confusion Matrix"] != DBNull.Value))
             {
                 ConfusionMatrix cm = (ConfusionMatrix)dr["Confusion Matrix"];
 
-                htmlConfusionMatrix += "<tr>";
-                htmlConfusionMatrix += String.Format("<td>{0}</td>", dr["Processed Total"]);
-                htmlConfusionMatrix += String.Format("<td>{0}</td>", cm.ToHtml());
-                htmlConfusionMatrix += "</tr>";
-                htmlConfusionMatrix += Environment.NewLine;
-                htmlConfusionMatrix += Environment.NewLine;
+                htmlConfMatWithTree += "<tr>";
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", dr["Pass"]);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", dr["Processed Total"]);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", cm.ToHtml());
+                htmlConfMatWithTree += String.Format("<td>{0:F1}%</td>", cm.Accuracy * 100);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", (string)dr["Decision Tree"]);
+                htmlConfMatWithTree += String.Format("<td style='border: 1px solid #AAAAAA;'><small><pre>{0}</pre></small></td>", (string)dr["Latex Tree"]);
+                htmlConfMatWithTree += "</tr>";
+                htmlConfMatWithTree += Environment.NewLine;
+                htmlConfMatWithTree += Environment.NewLine;
             }
-            htmlConfusionMatrix += "</table>";
-            htmlConfusionMatrix += "</html>";
-            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix " + suffix + ".html"), htmlConfusionMatrix);
+            htmlConfMatWithTree += "</table>";
+            htmlConfMatWithTree += "</html>";
+            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix and Tree " + suffix + ".html"), htmlConfMatWithTree);
             #endregion
 
             #region Save metadata file
@@ -672,6 +723,13 @@ namespace RLDT.Experiments
             swMeta.WriteLine("Parallel Report Updates: " + thePolicy.ParallelReportUpdatesEnabled);
             swMeta.Close();
             #endregion
+
+            // Save to CSV file
+            results.Columns.Remove("Confusion Matrix");
+            results.Columns.Remove("Decision Tree");
+            results.Columns.Remove("Latex Tree");
+            results.ToCsv(Path.Combine(ResultsDir, "Data " + suffix + ".csv"));
+
             #endregion
 
             //Close datasets
@@ -679,9 +737,12 @@ namespace RLDT.Experiments
             testingData.Close();
         }
 
-        [Fact]
+        [Fact] //55 sec
         public void Drifting()
         {
+            //A policy is trained with 1 pass of normal data and then with inversely-labeled data.
+            //This process is repeated to show the adaptibility to severely drifted data.
+
             #region Result Storage
             DataTable results = new DataTable();
             results.Columns.Add("Id", typeof(int));
@@ -694,6 +755,8 @@ namespace RLDT.Experiments
             results.Columns.Add("Training Time", typeof(int));
             results.Columns.Add("Testing Time", typeof(int));
             results.Columns.Add("Confusion Matrix", typeof(ConfusionMatrix));
+            results.Columns.Add("Decision Tree", typeof(string));
+            results.Columns.Add("Latex Tree", typeof(string));
             #endregion
 
             #region Datasets
@@ -793,6 +856,9 @@ namespace RLDT.Experiments
                         result["Testing Accuracy"] = confusionMatrix.Accuracy;
                         result["Testing Time"] = stopwatchTesting.ElapsedMilliseconds;
                         result["Confusion Matrix"] = confusionMatrix;
+                        var tree = thePolicy.ToDecisionTree(new DecisionTree.TreeSettings() { ShowBlanks = false, ShowSubScores = false });
+                        result["Decision Tree"] = tree.ToHtmlTree(new DecisionTree.TreeNode.TreeDisplaySettings() { IncludeDefaultTreeStyling = false });
+                        result["Latex Tree"] = tree.ToLatexForest();
                     }
                 }
 
@@ -803,9 +869,6 @@ namespace RLDT.Experiments
             #endregion
 
             #region Save Results
-            // Save to CSV file
-            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
-
             #region Save chart to html and pdf
             //Create charts
             Chart chartStates = new Chart("States vs Processed", "Processed", "States");
@@ -827,28 +890,36 @@ namespace RLDT.Experiments
             chartAccuracy.ToPdf(Path.Combine(ResultsDir, "Accuracy"));
             #endregion
 
-            #region  Save confusion matrix
-            string htmlConfusionMatrix = "<html>";
-            htmlConfusionMatrix += ConfusionMatrix.HtmlStyling;
-            htmlConfusionMatrix += "<table>";
-            htmlConfusionMatrix += "<tr>";
-            htmlConfusionMatrix += "<th>Processed Points</th>";
-            htmlConfusionMatrix += "<th>Confusion Matrix</th>";
-            htmlConfusionMatrix += "</tr>";
+            #region  Save confusion matrix and tree
+            string htmlConfMatWithTree = "<html>";
+            htmlConfMatWithTree += ConfusionMatrix.HtmlStyling;
+            htmlConfMatWithTree += "<table>";
+            htmlConfMatWithTree += "<tr>";
+            htmlConfMatWithTree += "<th>Pass</th>";
+            htmlConfMatWithTree += "<th>Processed Points</th>";
+            htmlConfMatWithTree += "<th>Confusion Matrix</th>";
+            htmlConfMatWithTree += "<th>Accuracy</th>";
+            htmlConfMatWithTree += "<th>Decision Tree</th>";
+            htmlConfMatWithTree += "<th>Latex</th>";
+            htmlConfMatWithTree += "</tr>";
             foreach (DataRow dr in results.Rows.Cast<DataRow>().Where(p => p["Confusion Matrix"] != DBNull.Value))
             {
                 ConfusionMatrix cm = (ConfusionMatrix)dr["Confusion Matrix"];
 
-                htmlConfusionMatrix += "<tr>";
-                htmlConfusionMatrix += String.Format("<td>{0}</td>", dr["Processed Total"]);
-                htmlConfusionMatrix += String.Format("<td>{0}</td>", cm.ToHtml());
-                htmlConfusionMatrix += "</tr>";
-                htmlConfusionMatrix += Environment.NewLine;
-                htmlConfusionMatrix += Environment.NewLine;
+                htmlConfMatWithTree += "<tr>";
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", dr["Pass"]);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", dr["Processed Total"]);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", cm.ToHtml());
+                htmlConfMatWithTree += String.Format("<td>{0:F1}%</td>", cm.Accuracy * 100);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", (string)dr["Decision Tree"]);
+                htmlConfMatWithTree += String.Format("<td style='border: 1px solid #AAAAAA;'><small><pre>{0}</pre></small></td>", (string)dr["Latex Tree"]);
+                htmlConfMatWithTree += "</tr>";
+                htmlConfMatWithTree += Environment.NewLine;
+                htmlConfMatWithTree += Environment.NewLine;
             }
-            htmlConfusionMatrix += "</table>";
-            htmlConfusionMatrix += "</html>";
-            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix.html"), htmlConfusionMatrix);
+            htmlConfMatWithTree += "</table>";
+            htmlConfMatWithTree += "</html>";
+            File.WriteAllText(Path.Combine(this.ResultsDir, "Confusion Matrix and Tree.html"), htmlConfMatWithTree);
             #endregion
 
             #region Save metadata file
@@ -879,6 +950,12 @@ namespace RLDT.Experiments
             File.WriteAllText(Path.Combine(ResultsDir, "tree-full.html"), thePolicy.DecisionTree.ToHtmlTree());
             File.WriteAllText(Path.Combine(ResultsDir, "tree-simple.html"), thePolicy.ToDecisionTree(ts_simple).ToHtmlTree());
             #endregion
+
+            // Save to CSV file
+            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
+            results.Columns.Remove("Confusion Matrix");
+            results.Columns.Remove("Decision Tree");
+            results.Columns.Remove("Latex Tree");
             #endregion
 
             //Close datasets
@@ -886,9 +963,13 @@ namespace RLDT.Experiments
             testingNormalData.Close();
         }
 
-        [Fact]
+        [Fact] //8.9 min
         public void FeatureSpaceSize()
         {
+            //Several datasets have been created with several random extra features.
+            //The extra datasets represent exponentially increasing feature spaces.
+            //The processing time and policy complexity (total states) are tracked against the increasing feature space.
+
             #region Result Storage
             DataTable results = new DataTable();
             results.Columns.Add("Feature Space Size", typeof(double));
@@ -960,7 +1041,6 @@ namespace RLDT.Experiments
             stopwatchProcessing.Stop();
             #endregion
 
-            #region Save Results
             //Compute relative training times
             double minTime = double.PositiveInfinity;
             foreach (DataRow r in results.Rows)
@@ -969,9 +1049,7 @@ namespace RLDT.Experiments
             foreach (DataRow r in results.Rows)
                 r["Training Time (relative)"] = (double)r["Training Time (ms)"] / minTime;
 
-            // Save to CSV file
-            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
-
+            #region Save Results
             #region Save chart to html and pdf
             //Create charts
             Chart chartStates = new Chart("States vs Feature Space", "Feature Space", "States") { xLogarithmic = true };
@@ -1015,12 +1093,21 @@ namespace RLDT.Experiments
             swMeta.WriteLine("Parallel Report Updates: " + thePolicy.ParallelReportUpdatesEnabled);
             swMeta.Close();
             #endregion
+
+            // Save to CSV file
+            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
             #endregion
         }
 
-        [Fact]
+        [Fact] //7.2 min
         public void SpeedAccuracyComparison()
         {
+            //A policy is trained and then the testing data is classified with timers running.
+            //At each testing interval, all testing data is classified with both the MDP and the summarized tree.
+            //The times for both are used to compute the min,avg,max at that testing interval saved to the results.
+            //Charts are made to show the relative processing times for the MDP and decision tree as the number of states increases.
+            //Accuracy is also tracked for reference.
+
             #region Result Storage
             DataTable results = new DataTable();
             results.Columns.Add("Id", typeof(int));
@@ -1048,7 +1135,8 @@ namespace RLDT.Experiments
             string testingCsvPath = DataSets(datasetName, defaultDatasetTestingPercentage);
             CsvStreamReader testingData = new CsvStreamReader(testingCsvPath);
             string testingLabelName = "class";
-            int testingInterval = defaultTestingInterval; //50
+            //int testingInterval = defaultTestingInterval; // 33 sec
+            int testingInterval = 50; // 7.2 min
             #endregion
 
             #region Policy configuration
@@ -1136,9 +1224,6 @@ namespace RLDT.Experiments
             #endregion
 
             #region Save Results
-            // Save to CSV file
-            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
-
             #region Save chart to html and pdf
             //Create charts
             Chart chartStates = new Chart("States vs Processed", "Processed", "States");
@@ -1179,7 +1264,7 @@ namespace RLDT.Experiments
             chartTimeVsStatesTree.ToPdf(Path.Combine(ResultsDir, "Tree Times"));
 
             chartAccuracy.ToHtml(Path.Combine(ResultsDir, "Accuracy"));
-            chartAccuracy.ToPdf(Path.Combine(ResultsDir, "Acccuracy"));
+            chartAccuracy.ToPdf(Path.Combine(ResultsDir, "Accuracy"));
             #endregion
 
             #region Save metadata file
@@ -1211,6 +1296,9 @@ namespace RLDT.Experiments
             File.WriteAllText(Path.Combine(ResultsDir, "tree-full.html"), thePolicy.DecisionTree.ToHtmlTree());
             File.WriteAllText(Path.Combine(ResultsDir, "tree-simple.html"), thePolicy.ToDecisionTree(ts_simple).ToHtmlTree());
             #endregion
+
+            // Save to CSV file
+            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
             #endregion
 
             //Close datasets
@@ -1219,12 +1307,17 @@ namespace RLDT.Experiments
         }
 
         [Theory]
-        [InlineData(0, new object[] {new object[]{"odor", -1 }})]
-        [InlineData(0, new object[] {new object[]{ "veil-color", -1 }})]
-        [InlineData(0, new object[] { new object[]{"odor", -1 }, new object[]{ "veil-color", -1 }})]
+        [InlineData(0, new object[] {new object[]{"odor", -1 }})] //1.2 min
+        [InlineData(0, new object[] {new object[]{ "veil-color", -1 }})] //1.2 min
+        [InlineData(0, new object[] { new object[]{"odor", -1 }, new object[]{ "veil-color", -1 }})] //1.2 min
         public void FeatureImportance(int dummy, object[] featureImportances)
         {
-            //Inserting a new feature half-way through and changing the weights to simulate sensor obsoletion.
+            //The policy is trained with normal data for 3 passes.
+            //The poicy is then trained with features with importance values for 3 passes.
+            //The policy is finally trained with normal data for 3 passes.
+            //The intention is to show a feature being removed from use (so it can later
+            //be removed from the stream). It is then reused to show it coming back.
+
             string datasetName = "random.csv";
             string order = Path.GetFileNameWithoutExtension(datasetName);
 
@@ -1241,6 +1334,7 @@ namespace RLDT.Experiments
             results.Columns.Add("Testing Time", typeof(long));
             results.Columns.Add("Confusion Matrix", typeof(ConfusionMatrix));
             results.Columns.Add("Decision Tree", typeof(string));
+            results.Columns.Add("Latex Tree", typeof(string));
             #endregion
 
             #region Datasets
@@ -1337,9 +1431,9 @@ namespace RLDT.Experiments
                         result["Testing Accuracy"] = confusionMatrix.Accuracy;
                         result["Testing Time"] = stopwatchTesting.ElapsedMilliseconds;
                         result["Confusion Matrix"] = confusionMatrix;
-                        result["Decision Tree"] = thePolicy
-                            .ToDecisionTree(new DecisionTree.TreeSettings() { ShowBlanks = false})
-                            .ToHtmlTree(new DecisionTree.TreeNode.TreeDisplaySettings() { IncludeDefaultTreeStyling = false });
+                        var tree = thePolicy.ToDecisionTree(new DecisionTree.TreeSettings() { ShowBlanks = false, ShowSubScores = false });
+                        result["Decision Tree"] = tree.ToHtmlTree(new DecisionTree.TreeNode.TreeDisplaySettings() { IncludeDefaultTreeStyling = false });
+                        result["Latex Tree"] = tree.ToLatexForest();
                     }
                 }
 
@@ -1362,7 +1456,6 @@ namespace RLDT.Experiments
                     subfolder += ",";
                 subfolder += string.Format("{0}={1:F2}", name, importance);
             }
-
             if (!Directory.Exists(Path.Combine(ResultsDir, subfolder)))
                 Directory.CreateDirectory(Path.Combine(ResultsDir, subfolder));
 
@@ -1398,18 +1491,19 @@ namespace RLDT.Experiments
             htmlConfMatWithTree += "<th>Confusion Matrix</th>";
             htmlConfMatWithTree += "<th>Accuracy</th>";
             htmlConfMatWithTree += "<th>Decision Tree</th>";
+            htmlConfMatWithTree += "<th>Latex Tree</th>";
             htmlConfMatWithTree += "</tr>";
             foreach (DataRow dr in results.Rows.Cast<DataRow>().Where(p => p["Confusion Matrix"] != DBNull.Value))
             {
                 ConfusionMatrix cm = (ConfusionMatrix)dr["Confusion Matrix"];
-                string tree = (string)dr["Decision Tree"];
 
                 htmlConfMatWithTree += "<tr>";
                 htmlConfMatWithTree += String.Format("<td>{0}</td>", dr["Pass"]);
                 htmlConfMatWithTree += String.Format("<td>{0}</td>", dr["Processed Total"]);
                 htmlConfMatWithTree += String.Format("<td>{0}</td>", cm.ToHtml());
                 htmlConfMatWithTree += String.Format("<td>{0:F1}%</td>", cm.Accuracy*100);
-                htmlConfMatWithTree += String.Format("<td>{0}</td>", tree);
+                htmlConfMatWithTree += String.Format("<td>{0}</td>", (string)dr["Decision Tree"]);
+                htmlConfMatWithTree += String.Format("<td style='border: 1px solid #AAAAAA;'><small><pre>{0}</pre></small></td>", (string)dr["Latex Tree"]);
                 htmlConfMatWithTree += "</tr>";
                 htmlConfMatWithTree += Environment.NewLine;
                 htmlConfMatWithTree += Environment.NewLine;
@@ -1420,7 +1514,7 @@ namespace RLDT.Experiments
             #endregion
 
             #region Save metadata file
-            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, "details.txt"));
+            StreamWriter swMeta = new StreamWriter(Path.Combine(ResultsDir, subfolder, "details.txt"));
             swMeta.WriteLine("# Training Configuration");
             swMeta.WriteLine("Training File: " + Path.GetFileName(trainingCsvPath));
             swMeta.WriteLine("Training File Path: " + trainingCsvPath);
@@ -1442,6 +1536,7 @@ namespace RLDT.Experiments
             // Save to CSV file
             results.Columns.Remove("Confusion Matrix");
             results.Columns.Remove("Decision Tree");
+            results.Columns.Remove("Latex Tree");
             results.ToCsv(Path.Combine(ResultsDir, subfolder, "Data.csv"));
 
             #endregion
@@ -1451,7 +1546,7 @@ namespace RLDT.Experiments
             testingData.Close();
         }
 
-        [Fact]
+        [Fact] //51 sec
         public void PartialDatavectors()
         {
             //The regular policy is trained as if all data is available.
@@ -1581,9 +1676,6 @@ namespace RLDT.Experiments
             #endregion
 
             #region Save Results
-            // Save to CSV file
-            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
-
             #region Save chart to html and pdf
             //Create charts
             Chart chartStates = new Chart("States vs Processed", "Processed", "States");
@@ -1656,6 +1748,12 @@ namespace RLDT.Experiments
             swMeta.WriteLine("Parallel Report Updates: " + thePolicy.ParallelReportUpdatesEnabled);
             swMeta.Close();
             #endregion
+            
+            // Save to CSV file
+            results.Columns.Remove("Confusion Matrix");
+            results.Columns.Remove("Confusion Matrix - Specific");
+            results.ToCsv(Path.Combine(ResultsDir, "Data.csv"));
+            
             #endregion
 
             //Close datasets
@@ -1663,9 +1761,12 @@ namespace RLDT.Experiments
             testingData.Close();
         }
 
-        [Fact]
+        [Fact] //4 sec
         public void Overfitting()
         {
+            //At each testing interval, the training data and testing data are classified
+            //and compared to the true labels. 
+
             #region Result Storage
             DataTable results = new DataTable();
             results.Columns.Add("Id", typeof(int));

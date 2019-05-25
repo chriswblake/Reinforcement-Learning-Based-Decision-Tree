@@ -14,14 +14,14 @@ namespace RLDT.DecisionTree.Latex
         {
             string s = "";
             s += @"\begin{figure}[H]" + "\n";
-            s += @"  \centering" + "\n";
-            s += @"  \small" + "\n";
-            s += @"  \begin{forest}" + "\n";
-            s += @"    leaf/.style={fill={leaffill},draw={leafborder,thick},align=center,base=top}" + "\n";
-            s += ToLatexForest(treeNode, "    " + "  ");
-            s += @"  \end{forest}" + "\n";
-            s += @"  \caption{CAPTION_TEXT}" + "\n";
-            s += @"  \label{fig:FIGURE_NAME}" + "\n";
+            s += @"    \centering" + "\n";
+            s += @"    \small" + "\n";
+            s += @"    \begin{forest}" + "\n";
+            s += @"        leaf/.style={fill={leaffill},draw={leafborder,thick},align=center,base=top}" + "\n";
+            s += ToLatexForest(treeNode, "    " + "    ");
+            s += @"    \end{forest}" + "\n";
+            s += @"    \caption{CAPTION}" + "\n";
+            s += @"    \label{fig:FIGURE_NAME}" + "\n";
             s += @"\end{figure}";
             return s;
         }
@@ -34,6 +34,10 @@ namespace RLDT.DecisionTree.Latex
         /// <returns></returns>
         private static string ToLatexForest(TreeNode groupNode, string offset)
         {
+            //Check for root node. Skip if if not needed.
+            if (groupNode.Type == TreeNodeType.Root && groupNode.SubNodes.Count == 1 && groupNode.Leaves.Count == 0)
+                return ToLatexForest(groupNode.SubNodes[0], offset);
+
             string s = "";
 
             s += offset + string.Format("[{0}, ", groupNode.Name);
@@ -44,7 +48,7 @@ namespace RLDT.DecisionTree.Latex
             if (groupNode.SubNodes.Count > 0)
             {
                 foreach (var subnode in groupNode.SubNodes)
-                    s += ToLatexForest(subnode, offset + "   ");
+                    s += ToLatexForest(subnode, offset + "    ");
             }
 
             //Show leaves

@@ -25,6 +25,8 @@ namespace RLDT.Experiments
         [InlineData("original", 80)]
         [InlineData("random", 80)]
         [InlineData("random_flipped_labels", 80)]
+        [InlineData("ordered_by_class_asc", 80)]
+        [InlineData("ordered_by_class_desc", 80)]
         public string DataSets(string name, int percentage=100)
         {
             //Automatically splits a dataset into sub-datasets and caches results.
@@ -100,6 +102,8 @@ namespace RLDT.Experiments
         [Theory]
         [InlineData("original")] //6 sec 
         [InlineData("random")] //3 sec
+        [InlineData("ordered_by_class_asc")] //3 sec
+        [InlineData("ordered_by_class_desc")] //3 sec
         public void DataOrder(string datasetName)
         {
             //A policy is trained with various datasets that have been organized

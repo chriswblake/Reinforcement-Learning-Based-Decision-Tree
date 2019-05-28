@@ -24,7 +24,7 @@ namespace RLDT.Experiments
         [Theory]
         [InlineData("original", 80)]
         [InlineData("random", 80)]
-        [InlineData("randomInversedLabel", 80)]
+        [InlineData("random_flipped_labels", 80)]
         public string DataSets(string name, int percentage=100)
         {
             //Automatically splits a dataset into sub-datasets and caches results.
@@ -770,7 +770,7 @@ namespace RLDT.Experiments
             CsvStreamReader trainingNormalData = new CsvStreamReader(trainingNormalCsvPath);
 
             //Training (inversed)
-            string trainingInversedCsvPath = DataSets("randomInversedLabel", defaultDatasetTrainingPercentage);
+            string trainingInversedCsvPath = DataSets("random_flipped_labels", defaultDatasetTrainingPercentage);
             CsvStreamReader trainingInversedData = new CsvStreamReader(trainingInversedCsvPath);
 
             //Testing (normal)
@@ -778,7 +778,7 @@ namespace RLDT.Experiments
             CsvStreamReader testingNormalData = new CsvStreamReader(testingNormalCsvPath);
 
             //Testing (inversed)
-            string testingInversedCsvPath = DataSets("randomInversedLabel", defaultDatasetTestingPercentage);
+            string testingInversedCsvPath = DataSets("random_flipped_labels", defaultDatasetTestingPercentage);
             CsvStreamReader testingInversedData = new CsvStreamReader(testingInversedCsvPath);
             #endregion
 
